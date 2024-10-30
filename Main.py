@@ -3,34 +3,25 @@ Main File to run on raspberry pi.
 '''
 # Packages to import
 from Redpitaya_Simplified_Functions import *
+from Higher_Level_Functions import *
 import matplotlib.pyplot as plt
 
-# Constants
-Redpitaya_IP = "rp-f06501.local"
 
-# TESTING HERE REMOVE AFTER USE between these comments
+print(Board_Online(REDPITAYA_IP))
 
-# Testing if board is online or not Fase is not online, true is online.
-print(Board_Online(Redpitaya_IP))
+if Board_Online(REDPITAYA_IP) == True:
 
-if Board_Online(Redpitaya_IP) == True:
+    Reset_Signal_All(REDPITAYA_IP)
 
-    Frequency = 50000
-    Waveform = "SINE"
-    Amplitude = 1
-    Channel_Number = 1
-    Decimation = 32 # Effectivly sample rate look at charts online.
-    # Start Continueos signal
-    Start_Continuous_Signal(Frequency,Waveform,Amplitude,Redpitaya_IP,Channel_Number)
+    # Input lists assumed to correspond 1:1
+    frequencies = [10000, 20000, 30000, 10000, 20000, 30000]
+    amplitudes = [1, 1, 1, 0.5, 0.5, 0.5]
 
-    data_Signal = Record_Signal(Redpitaya_IP,Channel_Number,Decimation)
+    data = Measure(frequencies, amplitudes, 1, 1, True, 10, "InitTesting")
+    Quick_Plot(data)
+
+# Commented-out example of how you would retrieve and plot from a file:
+# temp = Get_DF_From_File(DATA_OUT + "/" + "InitTesting_22-55-20.csv")
+# Quick_Plot(temp)
+
     
-    Stop_Signal(Redpitaya_IP,Channel_Number)
-    #Reset_Signal_All(Redpitaya_IP)
-
-    data_No_Signal = Record_Signal(Redpitaya_IP,Channel_Number,Decimation)
-    
-    plt.plot(data_Signal, 'bo')
-    plt.plot(data_No_Signal, "r+")
-    plt.show()
-# TESTING HERE REMOVE AFTER USE between these comments

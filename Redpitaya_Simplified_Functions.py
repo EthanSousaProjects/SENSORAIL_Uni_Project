@@ -97,3 +97,4 @@ def Record_Signal(IP,Channel_Number,Decimation):
     Signal_Data = rp_s.acq_data(Channel_Number, convert=True)
 
     return(Signal_Data)
+
