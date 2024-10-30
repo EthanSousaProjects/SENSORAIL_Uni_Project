@@ -9,3 +9,9 @@ This project is about making a rail crack detection inspection robot. It will us
 ## Content In repository
 
 This project will store all of the code related to controlling the robot movement, telemetry collection, single generation and collection, signal processing and the user interface for viewing processed data.
+
+## Developer Guide
+
+We have created an `environment.yml` for our conda environment. Please create this environment and enble it for this project.
+
+We have used the 2024.3 release for the redpitaya board OS and the 'redpitaya_scpi.py' file. This was the most recent versions when this project was started. I cannot see future versions causing conflicts but to mitigate that use the same version as us.
