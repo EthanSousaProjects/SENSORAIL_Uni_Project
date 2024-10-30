@@ -50,7 +50,7 @@ def Stop_Signal(IP,Channel_Number):
     IP - The IP address link to the redpitaya board use a "<hostname>.local" address.
     Channel_Number - The output channel number on the redpitaya board (either 1 or 2)
     '''
-    scpi.scpi(IP).tx_txt("SOUR" + str(Channel_Number) + ":STATE OFF")
+    scpi.scpi(IP).tx_txt("OUTPUT" + str(Channel_Number) + ":STATE OFF")
 
 def Reset_Signal_All(IP):
     '''
@@ -80,19 +80,20 @@ def Record_Signal(IP,Channel_Number,Decimation):
     rp_s.acq_set(Decimation)
 
     rp_s.tx_txt('ACQ:START')
+    time.sleep(0.05)
     rp_s.tx_txt('ACQ:TRig NOW')
 
     while 1:
         rp_s.tx_txt('ACQ:TRig:STAT?')
         if rp_s.rx_txt() == 'TD':
             break
-
+    
     ## ! OS 2.00 or higher only ! ##
     while 1:
         rp_s.tx_txt('ACQ:TRig:FILL?')
         if rp_s.rx_txt() == '1':
             break
 
-    Signal_Data = rp_s.acq_data(Channel_Number, convert= True)
+    Signal_Data = rp_s.acq_data(Channel_Number, convert=True)
 
     return(Signal_Data)
