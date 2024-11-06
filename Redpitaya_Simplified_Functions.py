@@ -19,7 +19,8 @@ def Board_Online(IP):
     try:
         rp_s = scpi.scpi(IP)
         status = rp_s.tx_txt(':SYST:ERR?')
-        return True
+        # Also returning the scpi object
+        return True, rp_s 
 
     except:
         # Returned and error board likely off.
@@ -98,3 +99,11 @@ def Record_Signal(IP,Channel_Number,Decimation):
 
     return(Signal_Data)
 
+def Close_Connection(IP, scpi_object):
+    '''
+    Calls the destructor for the object -- closing the connection.\n
+    Can help prevent issues.
+    '''
+    Reset_Signal_All(IP)
+    scpi_object.__del__()
+    

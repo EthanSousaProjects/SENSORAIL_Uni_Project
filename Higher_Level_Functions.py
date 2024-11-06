@@ -7,6 +7,8 @@ import datetime
 import os
 import scipy.fft as sci
 import math
+import redpitaya_scpi as scpi
+
 
 import ast
 
@@ -45,7 +47,7 @@ def Measure(eFreq: list[int],
         current_amp = amp[i]
 
         # Iterating
-        for iter in range(numIterations):
+        for iter in range(numIterations):   
     
             # Starting the signal, collecting the data, and stopping the signal
             Start_Continuous_Signal(freq, WAVEFORM, current_amp, REDPITAYA_IP,outChannel)
@@ -56,12 +58,15 @@ def Measure(eFreq: list[int],
             now = datetime.datetime.now()
             outList.append([freq, iter, current_amp, now.time(), sig])
         
-            print("Measurement collected - " + "Iteration: " + str(iter), " Frequency: " + str(freq) + " Amplitude: " + str(current_amp))
+            print("Measurement collected (" + fileNamePrefix + ") - " + "Iteration: " + str(iter), " Frequency: " + str(freq) + " Amplitude: " + str(current_amp))
 
             # Arbitrary delay between measurements
             time.sleep(DELAY_BETWEEN_MEASUREMENTS)
 
-        Stop_Signal(REDPITAYA_IP, outChannel) # Wasn't stopping consistently so I tried this 
+        
+        Stop_Signal(REDPITAYA_IP, outChannel)
+        Stop_Signal(REDPITAYA_IP, inChannel)
+    
         
     # Creating the output dataframe
     df = pd.DataFrame(outList, columns=["Excitation Freq", "Iteration", "Driven Amp", "Time", "Signal"])
@@ -79,9 +84,9 @@ def Measure(eFreq: list[int],
     return df
 
 
-def Quick_Plot(dataframe: pd.DataFrame):
+def Quick_Plot(dataframe: pd.DataFrame, samePlot: bool = True):
     '''
-        Accepts a dataframe formatting identically to the Measure() output. \n
+        Accepts a dataframe formatting identically to the Measure() output and a boolean that dictates whether there are one or multiple plots.\n
         Averages over the iterations and plots the frequency domain against amplitude for each frequency-amplitude pair. 
         Intended to quickly visualise to check for any obvious errors.
     '''
@@ -90,8 +95,7 @@ def Quick_Plot(dataframe: pd.DataFrame):
     uniqueCombinations = [filteredDataframe['Excitation Freq'].tolist(), filteredDataframe['Driven Amp'].tolist()]
     numCombinations = len(uniqueCombinations[0]) 
 
-    #fig, ax = plt.subplots(math.ceil(math.sqrt(numCombinations)),math.ceil(math.sqrt(numCombinations)),figsize=(14, 10))
-    fig, ax = plt.subplots(numCombinations,figsize=(14, 10))
+    fig, ax = plt.subplots(1,figsize=(14, 10))  if samePlot else plt.subplots(numCombinations, figsize=(14, 10)) 
 
     for i in range(numCombinations):
         # Filtering for the frequency
@@ -115,10 +119,16 @@ def Quick_Plot(dataframe: pd.DataFrame):
         y = 10*np.log10(np.abs(FFT))
 
         # Plotting
-        ax[i].set_title("Excitation Freq: " + str(uniqueCombinations[0][i]) + "Hz, Driven Amp: " + str(uniqueCombinations[1][i]))
-        ax[i].grid()
-        ax[i].set(xlabel="Frequency (dB)", ylabel="|Amplitude| (dB)")
-        ax[i].semilogx(freq, y)
+        if not samePlot:
+            ax[i].set_title("Excitation Freq: " + str(uniqueCombinations[0][i]) + "Hz, Driven Amp: " + str(uniqueCombinations[1][i]))
+            ax[i].grid()
+            ax[i].set(xlabel="Frequency (dB)", ylabel="|Amplitude| (dB)")
+            ax[i].semilogx(freq, y)
+        else:
+            ax.grid()
+            ax.set(xlabel="Frequency (dB)", ylabel="|Amplitude| (dB)")
+            ax.semilogx(freq, y, label=str(uniqueCombinations[0][i]) + "Hz" + ", " + str(uniqueCombinations[1][i]) +"V")
+            ax.legend()
 
     plt.show()
     

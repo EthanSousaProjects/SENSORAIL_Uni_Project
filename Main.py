@@ -4,24 +4,40 @@ Main File to run on raspberry pi.
 # Packages to import
 from Redpitaya_Simplified_Functions import *
 from Higher_Level_Functions import *
-import matplotlib.pyplot as plt
+import time
 
+[out, red] = Board_Online(REDPITAYA_IP)
+print(out)
 
-print(Board_Online(REDPITAYA_IP))
-
-if Board_Online(REDPITAYA_IP) == True:
+if out == True:
 
     Reset_Signal_All(REDPITAYA_IP)
 
-    # Input lists assumed to correspond 1:1
-    frequencies = [10000, 20000, 30000, 10000, 20000, 30000]
-    amplitudes = [1, 1, 1, 0.5, 0.5, 0.5]
+    type = test_initial["couplant"]
 
-    data = Measure(frequencies, amplitudes, 1, 1, True, 10, "InitTesting")
-    Quick_Plot(data)
+    frequencies = type["f"]
+    amplitudes = type["a"]
+    fileNamePre = type["n"][0]
+
+    # Due to it failing frequently this while loop is required
+    success = False
+    count = 1
+    while success == False:
+        print("\nAttempt " + str(count) + "\n")
+        try:
+            data = Measure(frequencies, amplitudes, DEFAULT_IN, DEFAULT_OUT, True, DEFAULT_ITERATIONS, fileNamePre)
+            print("Attempt " + str(count) + " successful.")
+            success = True
+        except:
+            print("Attempt " + str(count) + " failed.")
+            count = count + 1
+            time.sleep(1)
+
+    # Closed connection before plotting to avoid issues
+    Close_Connection(REDPITAYA_IP, red)
+
+    Quick_Plot(data, True)
 
 # Commented-out example of how you would retrieve and plot from a file:
 # temp = Get_DF_From_File(DATA_OUT + "/" + "InitTesting_22-55-20.csv")
 # Quick_Plot(temp)
-
-    
