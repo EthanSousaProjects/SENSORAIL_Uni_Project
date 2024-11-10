@@ -84,7 +84,7 @@ def Measure(eFreq: list[int],
     return df
 
 
-def Quick_Plot(dataframe: pd.DataFrame, samePlot: bool = True):
+def Quick_Plot(dataframe: pd.DataFrame, samePlot: bool = True, timeDomain: bool = False):
     '''
         Accepts a dataframe formatting identically to the Measure() output and a boolean that dictates whether there are one or multiple plots.\n
         Averages over the iterations and plots the frequency domain against amplitude for each frequency-amplitude pair. 
@@ -106,29 +106,45 @@ def Quick_Plot(dataframe: pd.DataFrame, samePlot: bool = True):
         signals = temp_df["Signal"].tolist()
         # Averaging the signals
         avSignal = np.average(signals, axis=0)
+        # Removing DC offset 
+        avSignal = avSignal - np.mean(avSignal)
 
         N = len(avSignal)
         
-        # Grabbing the FFT and freq (excluding the negatives)
-        FFT = sci.fft(avSignal)
-        FFT = FFT[:N // 2]
-        freq = sci.fftfreq(N, DT)
-        freq = freq[:N // 2]
+        if not timeDomain:
+            # Grabbing the FFT and freq (excluding the negatives)
+            N = len(avSignal)
+            FFT = sci.fft(avSignal)
+            FFT = FFT[:N // 2]
+            freq = sci.fftfreq(N, DT)
+            freq = freq[:N // 2]
 
-        # Converting to dB
-        y = 10*np.log10(np.abs(FFT))
+            # Converting to dB (dBV)
+            y = 20*np.log10(FFT) 
 
-        # Plotting
-        if not samePlot:
-            ax[i].set_title("Excitation Freq: " + str(uniqueCombinations[0][i]) + "Hz, Driven Amp: " + str(uniqueCombinations[1][i]))
-            ax[i].grid()
-            ax[i].set(xlabel="Frequency (dB)", ylabel="|Amplitude| (dB)")
-            ax[i].semilogx(freq, y)
+            # Plotting
+            if not samePlot:
+                ax[i].set_title("Excitation Freq: " + str(uniqueCombinations[0][i]) + "Hz, Driven Amp: " + str(uniqueCombinations[1][i]))
+                ax[i].grid()
+                ax[i].set(xlabel="Frequency (dB)", ylabel="|Amplitude| (dBV)")
+                ax[i].semilogx(freq, y)
+            else:
+                ax.grid()
+                ax.set(xlabel="Frequency (dB)", ylabel="|Amplitude| (dBV)")
+                ax.semilogx(freq, y, label=str(uniqueCombinations[0][i]) + "Hz" + ", " + str(uniqueCombinations[1][i]) +"V")
+                plt.ylim(-3*np.nanmax(y), 3*np.nanmax(y))
+                ax.legend()
         else:
-            ax.grid()
-            ax.set(xlabel="Frequency (dB)", ylabel="|Amplitude| (dB)")
-            ax.semilogx(freq, y, label=str(uniqueCombinations[0][i]) + "Hz" + ", " + str(uniqueCombinations[1][i]) +"V")
-            ax.legend()
+            t = [SAMPLING_PERIOD*x for x in range(N)]
+            if samePlot:
+                ax.plot(t, avSignal, label=str(uniqueCombinations[0][i]) + "Hz" + ", " + str(uniqueCombinations[1][i]) +"V")
+                ax.set(xlabel="Time (s)", ylabel="|Amplitude| (dBV)")
+                ax.legend()
+            else:
+                ax[i].plot(t, avSignal)
+                ax[i].set(xlabel="Time (s)", ylabel="|Amplitude| (dBV)",  label=str(uniqueCombinations[0][i]) + "Hz" + ", " + str(uniqueCombinations[1][i]) +"V")
+                ax[i].legend()
+                ax[i].grid()
 
     plt.show()
     

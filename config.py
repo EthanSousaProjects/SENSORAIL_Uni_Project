@@ -11,15 +11,26 @@ DELAY_BETWEEN_MEASUREMENTS = 0
 DEFAULT_IN = 1
 DEFAULT_OUT = 1
 
-DT = 0.0000001 # Temporary and should really be replaced with a calculation with the decimation
+SAMPLING_RATE = ((125E6)/DECIMATION)
+SAMPLING_PERIOD = 1/SAMPLING_RATE
+DT = SAMPLING_PERIOD
+
+SAMPLING_DELAY = 0.5
+
 
 # Dict that we can invoke in the Main script while testing
 test_initial = dict(
 
+    test = dict(
+        f = [120000],
+        a = [1],
+        n = ["Test"]
+    ),
     couplant = dict(
         f = [int(multiplier * 10 ** (decade - 1)) for decade in range(2, int(np.log10(10**6)) + 1) for multiplier in range(2, 10, 2)],
         a = [1 for x in range(20)],
-        n = ["None", "Silicon", "Grease"]
+        n = ["None", "Silicon", "Grease", "ThinSilicon"],
+        x = ["_Web_Same_Face", "_Web_Head", "_Web_Opp_Face", "_Head_Web"]
     ),
     positioning = dict(
         f = [int(multiplier * 10 ** (decade - 1)) for decade in range(2, int(np.log10(10**6)) + 1) for multiplier in range(2, 10, 2)],

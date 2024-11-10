@@ -10,6 +10,7 @@ It will communite using a direct ethernet link.
 import sys
 import time
 import redpitaya_scpi as scpi
+from config import *
 
 def Board_Online(IP):
     '''
@@ -81,7 +82,7 @@ def Record_Signal(IP,Channel_Number,Decimation):
     rp_s.acq_set(Decimation)
 
     rp_s.tx_txt('ACQ:START')
-    time.sleep(0.05)
+    time.sleep(SAMPLING_DELAY)
     rp_s.tx_txt('ACQ:TRig NOW')
 
     while 1:
@@ -107,3 +108,27 @@ def Close_Connection(IP, scpi_object):
     Reset_Signal_All(IP)
     scpi_object.__del__()
     
+
+
+
+class red:
+    def __init__(self, _IP = REDPITAYA_IP):
+        self.IP = _IP
+        self.rps_ = scpi.scpi(self.IP)
+        self.decimation = DECIMATION
+        self.actualSampleRate = 125E6/self.decimation
+        self.preTrigSamples = None
+
+        # For pulse-based excitation
+        self.oscillations = None
+      
+        pass
+
+    def norm_amps(self, _freq):
+        lowestFreq = np.min(_freq)
+        desiredAmps = []
+
+        for f in _freq:
+            desiredAmps.append(np.sqrt((np.square(1) * f) / lowestFreq))
+
+        return ((desiredAmps / np.max(desiredAmps)) * 0.75)

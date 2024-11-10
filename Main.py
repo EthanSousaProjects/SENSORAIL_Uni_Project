@@ -6,7 +6,7 @@ from Redpitaya_Simplified_Functions import *
 from Higher_Level_Functions import *
 import time
 
-[out, red] = Board_Online(REDPITAYA_IP)
+[out, red] = Board_Online(REDPITAYA_IP) 
 print(out)
 
 if out == True:
@@ -17,7 +17,7 @@ if out == True:
 
     frequencies = type["f"]
     amplitudes = type["a"]
-    fileNamePre = type["n"][0]
+    fileNamePre = type["n"][0] + type["x"][0]
 
     # Due to it failing frequently this while loop is required
     success = False
