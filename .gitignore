@@ -3,3 +3,4 @@ data_out/
 .dist/
 venv/
 test.py
+.DS_Store
