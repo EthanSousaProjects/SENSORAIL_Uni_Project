@@ -161,5 +161,65 @@ def k_factor(
     """
     return np.max(np.abs(signal)) * np.sqrt(np.mean(signal**2))
 
+def kurtosis(
+    signal: np.ndarray
+    ) -> float:
+    """
+    Describes the tailedness or the presence of outliers in the data.
+
+    Args:
+        signal: The time domin representation of a signal
+
+    Returns:
+        float: Kurtosis
+    """
+    def central_moment(order: int):
+        return np.mean((signal - signal.mean()) ** order)
+
+    return central_moment(4) / central_moment(2) ** 2
+
+def margin_factor(
+    signal: np.ndarray
+    ) -> float:
+    """
+    Ratio of the peak amplitude and square mean of the square root of the absolute values.
+    Used in fault detection of bearings.
+
+    Args:
+        signal: The time domin representation of a signal
+
+    Returns:
+        float: Margin factor
+    """
+    return np.max(np.abs(signal)) / (np.mean(np.sqrt(np.abs(signal))) ** 2)
+
+def peak_amplitude(
+    signal: np.ndarray
+    ) -> float:
+    """
+    The maximum absolute amplitude of a signal.
+
+    Args:
+        signal: The time domin representation of a signal
+
+    Returns:
+        float: Peak amplitude
+    """
+    return np.max(np.abs(signal))
+
+def rms(
+    signal: np.ndarray
+    ) -> float:
+    """
+    Quadratic mean of the signal which is a measure of the average energy of a signal.
+    Used in wear and leak detection.
+
+        Args:
+        signal: The time domin representation of a signal
+
+    Returns:
+        float: RMS of the signal
+    """
+    return np.sqrt(np.mean(signal**2))
 
 #TODO: Add in all the rest of the functions on the webpage. Maybe package this all up and contribute to their site
