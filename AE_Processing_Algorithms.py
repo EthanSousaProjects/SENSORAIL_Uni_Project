@@ -177,6 +177,7 @@ def kurtosis(
         return np.mean((signal - signal.mean()) ** order)
 
     return central_moment(4) / central_moment(2) ** 2
+    #TODO: Make a central_moment common function to share between functions where it is used as there are multiple.
 
 def margin_factor(
     signal: np.ndarray
@@ -221,5 +222,90 @@ def rms(
         float: RMS of the signal
     """
     return np.sqrt(np.mean(signal**2))
+
+def shape_factor(
+    signal: np.ndarray
+    ) -> float:
+    """
+    The ratio between the RMS and the mean of absolute values.
+
+        Args:
+        signal: The time domin representation of a signal
+
+    Returns:
+        float: Shape factor
+    """
+    return np.sqrt(np.mean(signal**2)) / np.mean(np.abs(signal))
+
+def skewness(
+    signal: np.ndarray
+    ) -> float:
+    """
+    Statistical measure of that quantifies theasymmetry of the probability distribution of a dataset.
+    Provides information about the direction and degree of skew.
+
+    Args:
+        signal: The time domin representation of a signal
+
+    Returns:
+        float: Skewness
+    """
+
+    def central_moment(order: int):
+        return np.mean((signal - signal.mean()) ** order)
+
+    return central_moment(3) / central_moment(2) ** (3 / 2)
+    #TODO: Make a central_moment common function to share between functions where it is used as there are multiple.
+
+def spectral_centroid(
+    spectrum: np.ndarray, samplerate: float
+    ) -> float:
+    """
+    Indicates where the centre of mass of the spectrum is.
+    Commonly associated with the brightness of the sound.
+
+    Args:
+        spectrum: The amplitude against frequency representation of a signal
+        samplerate: The rate at which samples were taken
+
+    Returns:
+        float: Spectral centroid
+    """
+    ps = np.abs(spectrum) ** 2
+    ps_sum = 0.0
+    ps_sum_weighted = 0.0
+    for i, magnitude in enumerate(ps):
+        ps_sum += magnitude
+        ps_sum_weighted += magnitude * i
+    return 0.5 * samplerate / (len(ps) - 1) * (ps_sum_weighted / ps_sum)
+
+def spectral_kurtosis(
+    spectrum: np.ndarray, samplerate: float
+    ) -> float:
+    """
+    Spectral kurtosis is a measure of the "tailedness" or peakedness of the power spectrum around its mean.
+    High kurtosis: Indicates a distribution with heavy tails and a sharp peak.
+    Low kurtosis: Indicates a flatter distribution.
+    Normal kurtosis (value of 3): Indicates a normal distribution.
+
+    Args:
+        spectrum: The amplitude against frequency representation of a signal
+        samplerate: The rate at which samples were taken
+
+    Returns:
+        float: Spectral kurtosis
+    """
+    f_centroid = spectral_centroid(spectrum, samplerate)
+    ps = np.abs(spectrum) ** 2
+    ps_sum = 0.0
+    ps_sum_weighted_2 = 0.0
+    ps_sum_weighted_4 = 0.0
+    for i, magnitude in enumerate(ps):
+        f = 0.5 * samplerate / (len(ps) - 1) * i
+        ps_sum += magnitude
+        ps_sum_weighted_2 += magnitude * (f - f_centroid) ** 2
+        ps_sum_weighted_4 += magnitude * (f - f_centroid) ** 4
+    return (ps_sum_weighted_4 / ps_sum) / np.sqrt(ps_sum_weighted_2 / ps_sum) ** 4
+
 
 #TODO: Add in all the rest of the functions on the webpage. Maybe package this all up and contribute to their site
