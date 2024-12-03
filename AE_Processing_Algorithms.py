@@ -215,7 +215,7 @@ def rms(
     Quadratic mean of the signal which is a measure of the average energy of a signal.
     Used in wear and leak detection.
 
-        Args:
+    Args:
         signal: The time domin representation of a signal
 
     Returns:
@@ -283,9 +283,9 @@ def spectral_kurtosis(
     spectrum: np.ndarray, samplerate: float
     ) -> float:
     """
-    Spectral kurtosis is a measure of the "tailedness" or peakedness of the power spectrum around its mean.
-    High kurtosis: Indicates a distribution with heavy tails and a sharp peak.
-    Low kurtosis: Indicates a flatter distribution.
+    Spectral kurtosis is a measure of the "tailedness" or peakedness of the power spectrum around its mean.\n
+    High kurtosis: Indicates a distribution with heavy tails and a sharp peak.\n
+    Low kurtosis: Indicates a flatter distribution.\n
     Normal kurtosis (value of 3): Indicates a normal distribution.
 
     Args:
@@ -307,5 +307,122 @@ def spectral_kurtosis(
         ps_sum_weighted_4 += magnitude * (f - f_centroid) ** 4
     return (ps_sum_weighted_4 / ps_sum) / np.sqrt(ps_sum_weighted_2 / ps_sum) ** 4
 
+def spectral_peak_frequency(
+    spectrum: np.ndarray, samplerate: float
+    ) -> float:
+    """
+    The frequency at which a signal or a waveform has its highest energy.
+    The result is in the range of 0 Hz and the nyquist frequency.
+
+    Args:
+        spectrum: The amplitude against frequency representation of a signal
+        samplerate: The rate at which samples were taken
+
+    Returns:
+        float: Spectral peak frequency
+    """
+    peak_bin = np.argmax(spectrum**2)
+    return 0.5 * samplerate / (len(spectrum) - 1) * peak_bin
+
+def spectral_rolloff(
+    spectrum: np.ndarray, samplerate: float, rolloff: int
+    ) -> float:
+    """
+    The frequency below which of the total energy of the spectrum is contained.
+    Typical values for n (roll off) are 95, 90, 75 and 50.
+
+    Args:
+        spectrum: The amplitude against frequency representation of a signal
+        samplerate: The rate at which samples were taken
+        rolloff: roll-off point % limits [0,100]
+
+    Returns:
+        float: Spectral rolloff
+    """
+    ps = np.abs(spectrum) ** 2
+    ps_sum_rolloff = (rolloff / 100) * np.sum(ps)
+    ps_sum = 0.0
+    for i, magnitude in enumerate(ps):
+        ps_sum += magnitude
+        if ps_sum >= ps_sum_rolloff:
+            return 0.5 * samplerate / (len(ps) - 1) * i
+    return 0.5 * samplerate
+
+def spectral_skewness(
+    spectrum: np.ndarray, samplerate: float
+    ) -> float:
+    """
+    Measure of the asymmetry of the power spectrum around its mean, the spectral centroid.
+    It indicates whether the bulk of the spectral power lies to the left or right of the centroid.
+    Positive skewness: Indicates a spectrum with a tail extending towards higher frequencies.\n
+    Negative skewness: Indicates a spectrum with a tail extending towards lower frequencies.\n
+    Zero skewness: Indicates a symmetric spectrum around the centroid.\n
+
+    Args:
+        spectrum: The amplitude against frequency representation of a signal
+        samplerate: The rate at which samples were taken
+
+    Returns:
+        float: Spectral skewness
+    """
+    f_centroid = spectral_centroid(spectrum, samplerate)
+    ps = np.abs(spectrum) ** 2
+    ps_sum = 0.0
+    ps_sum_weighted_2 = 0.0
+    ps_sum_weighted_3 = 0.0
+    for i, magnitude in enumerate(ps):
+        f = 0.5 * samplerate / (len(ps) - 1) * i
+        ps_sum += magnitude
+        ps_sum_weighted_2 += magnitude * (f - f_centroid) ** 2
+        ps_sum_weighted_3 += magnitude * (f - f_centroid) ** 3
+    return (ps_sum_weighted_3 / ps_sum) / np.sqrt(ps_sum_weighted_2 / ps_sum) ** 3
+
+def spectral_variance(
+    spectrum: np.ndarray, samplerate: float
+    ) -> float:
+    """
+    Quantifies the spread or dispersion of the spectral content around its center of mass, the spectral centroid.
+    
+    Args:
+        spectrum: The amplitude against frequency representation of a signal
+        samplerate: The rate at which samples were taken
+
+    Returns:
+        float: spectral_variance
+    
+    """
+    f_centroid = spectral_centroid(spectrum, samplerate)
+    ps = np.abs(spectrum)
+    ps_sum = 0.0
+    ps_sum_weighted = 0.0
+    for i, magnitude in enumerate(ps):
+        f = 0.5 * samplerate / (len(ps) - 1) * i
+        ps_sum += magnitude
+        ps_sum_weighted += magnitude * (f - f_centroid) ** 2
+    return ps_sum_weighted / ps_sum
+
+def zero_crossing_rate(
+    signal: np.ndarray, samplerate: float
+    ) -> int:
+    """
+    Rate at which a signal changes from positive to zero to negative or from negative to zero to positive.
+
+    Args:
+        signal: The time domin representation of a signal
+        samplerate: The rate at which samples were taken
+    
+    Returns:
+        int: zero crossing rate
+    """
+    if len(signal) == 0:
+        return 0
+    crossings = 0
+    was_positive = signal[0] >= 0
+    for value in signal[1:]:
+        is_positive = value >= 0
+        if was_positive != is_positive:
+            crossings += 1
+        was_positive = is_positive
+    return samplerate * crossings / len(signal)
 
 #TODO: Add in all the rest of the functions on the webpage. Maybe package this all up and contribute to their site
