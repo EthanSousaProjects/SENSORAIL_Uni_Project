@@ -19,7 +19,20 @@ import numpy as np
 # Functions of algorithums
 ######################################
 
-#TODO: Add in a signal to spectrum function (believe it's the FFT thing Tom should know/ has done)
+def singal_to_Spectrum(
+    signal: np.ndarray
+    ):
+    """
+    Convert a singal (amplitude time domain) to a spectrum (frequency amplitude domain).
+
+    Args:
+        signal: The time domin representation of a signal
+
+    Returns:
+        spectrum: The amplitude against frequency representation of a signal
+    """
+
+    return np.fft.fft(signal)
 
 def band_energy(
     spectrum: np.ndarray, samplerate: float, f_lower: float, f_upper: float
@@ -161,6 +174,19 @@ def k_factor(
     """
     return np.max(np.abs(signal)) * np.sqrt(np.mean(signal**2))
 
+def central_moment(
+    order: int
+    ) -> float:
+    """
+    Function used in other AE processing functions.
+
+    Args:
+        order: integer of the central moment order
+    Returns:
+        float: Central moment
+    """
+    return np.mean((signal - signal.mean()) ** order)
+
 def kurtosis(
     signal: np.ndarray
     ) -> float:
@@ -173,11 +199,8 @@ def kurtosis(
     Returns:
         float: Kurtosis
     """
-    def central_moment(order: int):
-        return np.mean((signal - signal.mean()) ** order)
 
     return central_moment(4) / central_moment(2) ** 2
-    #TODO: Make a central_moment common function to share between functions where it is used as there are multiple.
 
 def margin_factor(
     signal: np.ndarray
@@ -255,7 +278,6 @@ def skewness(
         return np.mean((signal - signal.mean()) ** order)
 
     return central_moment(3) / central_moment(2) ** (3 / 2)
-    #TODO: Make a central_moment common function to share between functions where it is used as there are multiple.
 
 def spectral_centroid(
     spectrum: np.ndarray, samplerate: float
@@ -424,5 +446,3 @@ def zero_crossing_rate(
             crossings += 1
         was_positive = is_positive
     return samplerate * crossings / len(signal)
-
-#TODO: Add in all the rest of the functions on the webpage. Maybe package this all up and contribute to their site
