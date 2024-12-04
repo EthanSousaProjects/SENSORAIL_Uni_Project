@@ -15,9 +15,15 @@ if out == True:
 
     type = test_initial["couplant"]
 
+    """
     frequencies = type["f"]
     amplitudes = type["a"]
     fileNamePre = type["n"][0] + type["x"][0]
+    """
+
+    frequencies = [150000]
+    amplitudes = [1]
+    fileNamePre = "Defect_Head_3rd_Place_Resonance_150_100_Iters"
 
     # Due to it failing frequently this while loop is required
     success = False
@@ -36,7 +42,7 @@ if out == True:
     # Closed connection before plotting to avoid issues
     Close_Connection(REDPITAYA_IP, red)
 
-    Quick_Plot(data, True)
+    #Quick_Plot(data, True)
 
 # Commented-out example of how you would retrieve and plot from a file:
 # temp = Get_DF_From_File(DATA_OUT + "/" + "InitTesting_22-55-20.csv")
