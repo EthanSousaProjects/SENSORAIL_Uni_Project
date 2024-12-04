@@ -175,6 +175,7 @@ def k_factor(
     return np.max(np.abs(signal)) * np.sqrt(np.mean(signal**2))
 
 def central_moment(
+    signal: np.ndarray,
     order: int
     ) -> float:
     """
@@ -200,7 +201,7 @@ def kurtosis(
         float: Kurtosis
     """
 
-    return central_moment(4) / central_moment(2) ** 2
+    return central_moment(signal,4) / central_moment(signal,2) ** 2
 
 def margin_factor(
     signal: np.ndarray
@@ -273,11 +274,7 @@ def skewness(
     Returns:
         float: Skewness
     """
-
-    def central_moment(order: int):
-        return np.mean((signal - signal.mean()) ** order)
-
-    return central_moment(3) / central_moment(2) ** (3 / 2)
+    return central_moment(signal,3) / central_moment(signal,2) ** (3 / 2)
 
 def spectral_centroid(
     spectrum: np.ndarray, samplerate: float
