@@ -4,3 +4,4 @@ data_out/
 venv/
 test.py
 .DS_Store
+pdf_reports/

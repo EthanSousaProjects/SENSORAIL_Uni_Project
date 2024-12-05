@@ -185,3 +185,6 @@ print("wait")
 #TODO: Calculate the binomial probabilities for each property accross each file. Mean and standard deviation. and save to file.
 
 #TODO: Make plots of all binomial data where it is defect vs no defect head vs web, etc need all data processed first.
+
+#TODO: change the name from binomial to normal distrabution got that wrong at first.
+#TODO: convert jupiter thing to this script when done.
