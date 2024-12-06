@@ -227,8 +227,11 @@ class stemLab:
         for freq in _frequencyList:
             desiredAmps.append(np.sqrt((np.square(1) * freq) / lowestFreq))
 
-        return ((desiredAmps / np.max(desiredAmps)) * 0.95)
+        return ((desiredAmps / np.max(desiredAmps)) * 0.75)
     
+
+
+    # Sending a particular number of oscillations of a particlar frequency at a particular amplitude
     def pulseAndRecieve(self, _pulseFreqKHZ, _amplitude = 0.9):
 
         """
