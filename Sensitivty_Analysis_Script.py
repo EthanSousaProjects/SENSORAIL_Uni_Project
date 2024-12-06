@@ -6,7 +6,7 @@ It will output a processed data frame with all those properties
 adding those columns to the final dataframe.
 
 Statistical analysis between the mean and standard deviations will be done.
-Will compare binomial distrabution curves.
+Will compare normal distrabution curves.
 
 """
 
@@ -20,30 +20,17 @@ from os import listdir
 import pandas as pd
 import numpy as np
 import ast
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
+import scipy.stats as stats
 
 #########################################
 # User inputs
 #########################################
 
 folder_with_data = "data_out"
-
-no_defect_files = [
-                "Defect_Web_1st_Place_Resonance_150_100_Iters_11-0-47",
-                "Defect_Web_2nd_Place_Resonance_150_100_Iters_11-6-8",
-                "Defect_Web_3rd_Place_Resonance_150_100_Iters_11-10-43",
-                "Defect_Head_1st_Place_Resonance_150_100_Iters_10-38-56",
-                "Defect_Head_2nd_Place_Resonance_150_100_Iters_10-46-0",
-                "Defect_Head_3rd_Place_Resonance_150_100_Iters_10-56-16"
-                ]
-
-defect_files = [
-                "No_Defect_Web_1st_Place_Resonance_150_100_Iters_10-41-12",
-                "No_Defect_Web_2nd_Place_Resonance_150_100_Iters_10-49-15",
-                "No_Defect_Web_3rd_Place_Resonance_150_100_Iters_10-54-35",
-                "No_Defect_Head_1st_Place_Resonance_150_100_Iters_10-11-22",
-                "No_Defect_Head_2nd_Place_Resonance_150_100_Iters_10-18-9",
-                "No_Defect_Head_3rd_Place_Resonance_150_100_Iters_10-26-34"
-                ]
+pdf_output = "pdf_reports" # folder where pdfs will be saved to.
+pdf_file_name = "normal_distrabution_plots" # name of pdf file that will be created.
 
 sample_rate = ((125E6)/32) # The ammount of samples taken in a secound.
 
@@ -102,6 +89,24 @@ def compute_all_ae_processing_algos(signal,sample_rate,lower_frequency,higher_fr
             "zero_crossing_rate": aepe.zero_crossing_rate(signal,sample_rate)
             })
 
+def normal_dis_plot(mean,std,line_name):
+    """
+    Function to take the mean and standard deviation and plot the normal distrabution
+    
+    Args:
+        mean: normal distrabution mean
+        std: normal distrabution standard deviation
+        line_name: name that line will be given
+
+    Returns:
+        plots a line of the normal distrabution
+
+    """
+    x_values = np.linspace(mean - 1*std, mean + 1*std, 100)
+    #TODO: chnage the 1 to a variable you can adjust at the top. 
+    plt.plot(x_values, stats.norm.pdf(x_values, mean, std), label=line_name)
+
+
 #########################################
 # Setup
 #########################################
@@ -135,14 +140,14 @@ properties_to_calculate = [
 
 # Creating a blank data frame to hold all the processed data means and standard deviations from each file
 # Will then be used to compare against each other with line plots and see how it all differs
-binomial_mean_processed = pd.DataFrame(
+normal_mean_processed = pd.DataFrame(
     columns=properties_to_calculate, index=files_in_folder)
-binomial_std_processed = pd.DataFrame(
+normal_std_processed = pd.DataFrame(
     columns=properties_to_calculate, index=files_in_folder)
 
 
 #########################################
-# Main Function running.
+# Main Processing of data
 #########################################
 
 # process signal data and save mean and standard deviation.
@@ -173,18 +178,36 @@ for file in files_in_folder:
     #TODO: create a function to execute the ae processing algos that we specify in a list. Make it a function.
 
     # Getting mean and standard deviation of properties and placing in tables.
-    binomial_mean_processed.loc[file] = processed_data_frame.mean(axis=0)
-    binomial_std_processed.loc[file] = processed_data_frame.std(axis=0)
+    normal_mean_processed.loc[file] = processed_data_frame.mean(axis=0)
+    normal_std_processed.loc[file] = processed_data_frame.std(axis=0)
 
 # Deleating data frames to free up memory once processing is compleated.
 del(file_data_frame)
 del(processed_data_frame)
-print(binomial_mean_processed)
-print(binomial_std_processed)
-print("wait")
-#TODO: Calculate the binomial probabilities for each property accross each file. Mean and standard deviation. and save to file.
 
-#TODO: Make plots of all binomial data where it is defect vs no defect head vs web, etc need all data processed first.
+#########################################
+# Probability plotting and pdf saving
+#########################################
 
-#TODO: change the name from binomial to normal distrabution got that wrong at first.
-#TODO: convert jupiter thing to this script when done.
+# Adding a prefex to the column headers of mean and std dataframes respectivly used to find correct data later
+normal_mean_processed.columns = [f"mean_{col}" for col in normal_mean_processed.columns]
+normal_std_processed.columns = [f"std_{col}" for col in normal_std_processed.columns]
+combined_normal_mean_std = pd.concat([normal_mean_processed, normal_std_processed], axis=1)
+
+# The pdf file setup
+pdf_file_of_charts = PdfPages(Path(pdf_output + "/" + pdf_file_name))
+
+for attribute in properties_to_calculate:
+    print(attribute)
+    # The apply statement on the data frame to produce the chart
+    filtered_combined_normal_mean_std.apply(
+        lambda row: normal_dis_plot(row[("mean_"+attribute)],row[("std_"+attribute)],row.name), axis=1)
+    plt.title(attribute + " normal plots")
+    plt.ylabel("Probability")
+    plt.xlabel(attribute)
+    plt.legend()
+    plt.savefig(pdf_file_of_charts,format="pdf")
+    plt.clf()
+
+# Close full pdf file.
+pdf_file_of_charts.close()
