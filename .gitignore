@@ -5,3 +5,5 @@ venv/
 test.py
 .DS_Store
 pdf_reports/
+data
+TabExample.py

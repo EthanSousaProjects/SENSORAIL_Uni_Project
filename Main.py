@@ -5,45 +5,35 @@ Main File to run on raspberry pi.
 from Redpitaya_Simplified_Functions import *
 from Higher_Level_Functions import *
 import time
+import numpy as np
+import matplotlib.pyplot as plt
+from red_class import *
 
-[out, red] = Board_Online(REDPITAYA_IP) 
-print(out)
 
-if out == True:
+rp = red_class(REDPITAYA_IP)
+ds = data_set(rp)
 
-    Reset_Signal_All(REDPITAYA_IP)
+#freq = [20000, 30000, 40000, 50000, 60000, 70000, 80000, 90000, 100000, 200000, 300000, 400000, 500000, 600000, 700000, 800000, 900000, 1000000, 1100000, 1200000]
+freq = [20000, 30000, 40000]
+amp = [0.5 for i in range(len(freq))]
 
-    type = test_initial["couplant"]
+ds.set_params(active1=True, active2=True)
 
-    """
-    frequencies = type["f"]
-    amplitudes = type["a"]
-    fileNamePre = type["n"][0] + type["x"][0]
-    """
+df = Get_DF_From_File("data_out/Grease_Web_Same_Face_40dB__12-49-0.csv")
+#df = Get_DF_From_File("data_out/FirstSweep1V_19-16-33.csv")
 
-    frequencies = [150000]
-    amplitudes = [1]
-    fileNamePre = "Defect_Head_3rd_Place_Resonance_150_100_Iters"
+ds.Time_Domain(df)
+#ds.Frequency_Domain(df)
 
-    # Due to it failing frequently this while loop is required
-    success = False
-    count = 1
-    while success == False:
-        print("\nAttempt " + str(count) + "\n")
-        try:
-            data = Measure(frequencies, amplitudes, DEFAULT_IN, DEFAULT_OUT, True, DEFAULT_ITERATIONS, fileNamePre)
-            print("Attempt " + str(count) + " successful.")
-            success = True
-        except:
-            print("Attempt " + str(count) + " failed.")
-            count = count + 1
-            time.sleep(1)
+# df_1, df_2 = ds.Measure(freq, amp, label="Noise_Test_2")
+# ds.Time_Domain(df_1)
 
-    # Closed connection before plotting to avoid issues
-    Close_Connection(REDPITAYA_IP, red)
+# ds.df_1 = ds.df_1[ds.df_1["Excitation Freq"] == 10]
+# ds.Time_Domain(df_1)
 
-    #Quick_Plot(data, True)
+# =======================================================
+# Soon to add a comprehensive, tabbed Quick_Plot successor.
+# =======================================================
 
-# Commented-out example of how you would retrieve and plot from a file:
-# temp = Get_DF_From_File(DATA_OUT + "/" + "InitTesting_22-55-20.csv")
-# Quick_Plot(temp)
+
+

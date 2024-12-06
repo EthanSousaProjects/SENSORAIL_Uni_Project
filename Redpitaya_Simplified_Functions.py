@@ -1,9 +1,12 @@
 '''
+
 This file will contain functions to interface with the redpitaya board.
 Mainly ones for generating and recording signals.
 This is simplified to work in the main program.
 
 It will communite using a direct ethernet link.
+
+NOW ONLY USED BY RETIRED FUNCTIONS.
 '''
 
 # Packages to import
@@ -11,6 +14,9 @@ import sys
 import time
 import redpitaya_scpi as scpi
 from config import *
+import matplotlib.pyplot as plt
+import pandas as pd
+import scipy.fft as sci
 
 def Board_Online(IP):
     '''
@@ -25,7 +31,7 @@ def Board_Online(IP):
 
     except:
         # Returned and error board likely off.
-        return False
+        return False, rp_s
 
 
 def Start_Continuous_Signal(Freq,Waveform,Amp,IP,Channel_Number):
@@ -108,27 +114,3 @@ def Close_Connection(IP, scpi_object):
     Reset_Signal_All(IP)
     scpi_object.__del__()
     
-
-
-
-class red:
-    def __init__(self, _IP = REDPITAYA_IP):
-        self.IP = _IP
-        self.rps_ = scpi.scpi(self.IP)
-        self.decimation = DECIMATION
-        self.actualSampleRate = 125E6/self.decimation
-        self.preTrigSamples = None
-
-        # For pulse-based excitation
-        self.oscillations = None
-      
-        pass
-
-    def norm_amps(self, _freq):
-        lowestFreq = np.min(_freq)
-        desiredAmps = []
-
-        for f in _freq:
-            desiredAmps.append(np.sqrt((np.square(1) * f) / lowestFreq))
-
-        return ((desiredAmps / np.max(desiredAmps)) * 0.75)
