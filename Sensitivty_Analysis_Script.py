@@ -30,7 +30,7 @@ import scipy.stats as stats
 
 folder_with_data = "data_out"
 pdf_output = "pdf_reports" # folder where pdfs will be saved to.
-pdf_file_name = "normal_distrabution_plots" # name of pdf file that will be created.
+pdf_file_name = "normal_distrabution_plots_head.pdf" # name of pdf file that will be created.
 
 sample_rate = ((125E6)/32) # The ammount of samples taken in a secound.
 
@@ -200,7 +200,7 @@ pdf_file_of_charts = PdfPages(Path(pdf_output + "/" + pdf_file_name))
 for attribute in properties_to_calculate:
     print(attribute)
     # The apply statement on the data frame to produce the chart
-    filtered_combined_normal_mean_std.apply(
+    combined_normal_mean_std .apply(
         lambda row: normal_dis_plot(row[("mean_"+attribute)],row[("std_"+attribute)],row.name), axis=1)
     plt.title(attribute + " normal plots")
     plt.ylabel("Probability")
