@@ -8,12 +8,5 @@ dependencies:
  - numpy=1.26.4
  - pandas=2.2.2
  - scipy=1.14.1
+ - ipykernel=6.29.5
  - pip=24.2
-
-# Untested work in progress file
-
-#TODO: Finish making this generic file
-
-#TODO: Test file on both MAC, windows and Linux for developement
-
-#TODO: Make a raspberry pi specific file for the conda env including the GPIO related packages.

@@ -4,6 +4,6 @@
 
 - If a package needs to be added to only the raspberry pi (like gpiozero) make sure to input the package and version into the `pi_conda_env.yml` file.
 
-- We have tried to use all the packages from the conda forge as it has more than the generic conda channel. However not all packages are avaliable in conda forge so pip packages can also be used and added to this env file.
+- We have tried to use all the packages from the conda forge as it has more than the generic conda channel. However, not all packages are avaliable in conda forge so pip packages can also be used and added to this env file.
 
-- Pip packages must be at the bottom of the packages to import. All conda packages should come before the pip commands in the env file.
+- Pip packages must be at the bottom of the packages to import. All conda forge packages should come before the pip commands in the env file.
