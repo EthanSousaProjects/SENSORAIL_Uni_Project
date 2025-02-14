@@ -10,10 +10,12 @@ dependencies:
  - pandas=2.2.2
  - scipy=1.14.1
  - ipykernel=6.29.5
- - pip=24.2
- - pip:
+ - pip3=24.2
+ - pip3:
    - gpiozero=2.0.1
    - RPi.GPIO=0.7.1
+   - Adafruit-Blinka=8.53.0
+   - adafruit-circuitpython-gps=3.11.1
 
 #TODO: Test on raspberry Pi.
 #Env file should work but just double check
