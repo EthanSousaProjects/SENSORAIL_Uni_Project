@@ -1,7 +1,7 @@
 import numpy as np;
 
 REDPITAYA_IP = "rp-f06501.local"
-DATA_OUT = "data_out"
+DATA_OUT = "data_out_sem2"
 
 WAVEFORM = "SINE"
 DECIMATION = 32
@@ -19,7 +19,7 @@ DT = SAMPLING_PERIOD
 # should usually be set to false
 NORMALISE_FOR_TIME = False
 # Below two are only relevant if the above is true
-TOTAL_SAMPLE_TIME = 16384 * SAMPLING_PERIOD
+TOTAL_SAMPLE_TIME =  16384* SAMPLING_PERIOD
 FRACTION_OF_SAMPLING_WINDOW = 0.25
 
 # Whether the amplitudes are normalised across frequencies
@@ -32,15 +32,48 @@ DEFAULT_POSITION = None
 DEFAULT_PRE_AMP_GAIN = 40
 DEFAULT_OUT_GAIN = 0
 
-DEFAULT_PRE_TRIGGER_SAMPLES = 200
-DEFAULT_OSCILLATIONS = 100
+DEFAULT_PRE_TRIGGER_SAMPLES = 1000
+DEFAULT_OSCILLATIONS = 1000
 
 # Referenced used for voltage dB calcuations
 REFERENCE_VOLTAGE = 1E-4 #100uV
 
 # Delay between samples. Should be at least 0.8 to prevent ringing.
-SAMPLING_DELAY = 0.8
+SAMPLING_DELAY = 3
 
+# Standard deviation for the gaussian smoothing
+SMOOTHING_SIGMA = 0.5
+
+NOISE_THRESHOLD_STD = 3
+
+DEFAULT_LOWER_FREQUENCY = 120000
+DEFAULT_HIGHER_FREQUENCY = 180000
+DEFAULT_THRESHOLD = 0.2
+DEFAULT_ROLL_OFF = 50
+
+
+PROPERTIES_TO_CALCULATE = [
+    "band_energy",
+    "band_energy_ratio",
+    "clearance_factor",
+    "counts",
+    "crest_factor",
+    "energy",
+    "impulse_factor",
+    "k_factor",
+    "kurtosis",
+    "margin_factor",
+    "peak_amplitude",
+    "rms",
+    "shape_factor",
+    "skewness",
+    "spectral_centroid",
+    "spectral_kurtosis",
+    "spectral_peak_frequency",
+    "spectral_rolloff",
+    "spectral_skewness",
+    "spectral_variance",
+    "zero_crossing_rate"]
 
 
 # Dict that we can invoke in the Main script while testing

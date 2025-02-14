@@ -6,3 +6,7 @@ test.py
 data
 TabExample.py
 .DS_Store
+.venv/
+data_out_sem2
+data_temp
+decimation_meas

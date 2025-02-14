@@ -2,6 +2,7 @@ import sys
 import time
 import redpitaya_scpi as scpi
 from config import *
+import ae_process_algos as aepe
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -16,6 +17,7 @@ class red_class:
     def __init__(self, IP = REDPITAYA_IP):
         self.IP = IP
         self.decimation = DECIMATION
+        self.oscillations = DEFAULT_OSCILLATIONS
         self.actualSampleRate = 125E6/self.decimation
         self.sampling_delay = SAMPLING_DELAY
         self.preTrigSamples = DEFAULT_PRE_TRIGGER_SAMPLES
@@ -30,7 +32,7 @@ class red_class:
         except:
             print("Cannot Connect to Board.")
         
-    def set_params(self, decimation = DECIMATION, oscillations = DEFAULT_OSCILLATIONS, preTriggerSamples = DEFAULT_PRE_TRIGGER_SAMPLES, outChannel = 1,waveformShape = "Sine"):
+    def set_params(self, decimation = DECIMATION, oscillations = DEFAULT_OSCILLATIONS, preTriggerSamples = DEFAULT_PRE_TRIGGER_SAMPLES, sampling_delay = SAMPLING_DELAY, outChannel = 1,waveformShape = "Sine"):
         '''
         Allows the configuration of individual parameters. Please configure this before creating Dataset objects if you are creating multiple. 
         '''
@@ -39,6 +41,7 @@ class red_class:
         self.oscillations = oscillations
         self.preTrigSamples = preTriggerSamples
         self.waveformShape = waveformShape 
+        self.sampling_delay = sampling_delay
         self.outChannel = outChannel
         self.actualSampleRate = 125E6/self.decimation
         # Need to update
@@ -74,7 +77,8 @@ class red_class:
 
         """
 
-        oscil = int(DEFAULT_OSCILLATIONS)
+        oscil = int(self.oscillations)
+        print(oscil)
         pulseFreqHz = int(pulseFreqKHZ * 1000)
         if NORMALISE_FOR_TIME:
             oscil = int(TOTAL_SAMPLE_TIME * FRACTION_OF_SAMPLING_WINDOW/ (1/pulseFreqHz))
@@ -94,12 +98,15 @@ class red_class:
         
         # Setup Acquisition
         self.rp_s.tx_txt('ACQ:RST')
+        #print(self.decimation)
         self.rp_s.acq_set(dec = self.decimation, trig_delay = (16384/2)-self.preTrigSamples)
 
         # Start acquisition and generation
         self.rp_s.tx_txt('ACQ:START')
+        time.sleep(0.5)
         self.rp_s.tx_txt('ACQ:TRig AWG_PE')
         self.rp_s.tx_txt('OUTPUT1:STATE ON')    
+        time.sleep(0.5)
         self.rp_s.tx_txt('SOUR1:TRig:INT')
         self.rp_s.tx_txt('SOUR2:TRig:INT')
 
@@ -120,41 +127,66 @@ class red_class:
         self.rp_s.tx_txt('OUTPUT2:STATE OFF')
 
         # Wait time is recommended
-        time.sleep(SAMPLING_DELAY)
+        time.sleep(self.sampling_delay)
 
         return ch1, ch2
 
 
-        plt.show()
-
-
 class data_set:
-    def __init__(self, red: red_class = None): 
+    def __init__(self, red: red_class = None, fileName: str = ""): 
 
-        # Need to add the option to contruct the class purely off of a filename, enabling complete retrieval 
-        # from the disk 
+        if fileName == "":
+            self.red_object = red
+            self.df_1 = pd.DataFrame()  # The intention here is to store the last measurement for each channel for easy plotting/analysis
+            self.df_2 = pd.DataFrame() 
+            self.configured = False # Bool that is indicative of whether the set_params function has been used, 
+                                    # allowing for a quick and easy answer to "did I configure that or did I just leave it on the defaults?"
 
-        self.red_object = red
-        self.df_1 = None  # The intention here is to store the last measurement for each channel for easy plotting/analysis
-        self.df_2 = None
-        self.configured = False # Bool that is indicative of whether the set_params function has been used, 
-                                # allowing for a quick and easy answer to "did I configure that or did I just leave it on the defaults?"
+            self.distance = DEFAULT_DISTANCE # Distance between the sensors
+            self.positions = DEFAULT_POSITION # Positions of the sensors
+            self.pre_amp_gain = DEFAULT_PRE_AMP_GAIN 
+            self.output_gain = DEFAULT_OUT_GAIN # Gain applied to the output. This should be reserved for power gain
 
-        self.distance = DEFAULT_DISTANCE # Distance between the sensors
-        self.positions = DEFAULT_POSITION # Positions of the sensors
-        self.pre_amp_gain = DEFAULT_PRE_AMP_GAIN 
-        self.output_gain = DEFAULT_OUT_GAIN # Gain applied to the output. This should be reserved for power gain
+            self.normalisedAmp = NORMALISED_AMP # Whether the amplitudes are normalised or not. 
 
-        self.normalisedAmp = NORMALISED_AMP # Whether the amplitudes are normalised or not. 
+            self.iterations = DEFAULT_ITERATIONS # How many iterations this datasets goes through
 
-        self.iterations = DEFAULT_ITERATIONS # How many iterations this datasets goes through
+            # Defining which input channels are active. 
+            self.channel_1_active = True
+            self.channel_2_active = False
+        else:
+            # Constructing from a directory
+            # Only implemented signal channel as that is all that we'll need
+            print("Constructing dataset class from " + fileName)
 
-        # Defining which input channels are active. 
-        self.channel_1_active = True
-        self.channel_2_active = False
+            data = Get_DF_From_File(fileName)
+            direct = fileName.split("/")
+            direct[len(direct) - 1] = direct[len(direct) -1].replace("_channel_1_", "").replace("_channel_2_", "")
+            label = direct.pop()
+            parameters = pd.read_csv("/".join(direct) + "/" + "Parameters__" +label)
+
+            self.red_object = red_class(REDPITAYA_IP)
+            self.red_object.set_params( 
+                decimation= parameters["Decimation"][0],
+                oscillations= parameters["Oscillations"][0],
+                preTriggerSamples= parameters["PreTriggerSamples"][0],
+                waveformShape= parameters["WaveformShape"][0],
+                sampling_delay= parameters["SamplingDelay"][0],
+                outChannel= 1,
+            )
+
+            self.df_1 = data
+            self.set_params(
+                dist= parameters["Distance"][0],
+                positions= parameters["Postions"][0],
+                pre_amp_g = parameters["PreAmpGain"][0],
+                out_g= parameters["OutputGain"][0],
+                iterations= parameters["Iterations"][0],
+                conf= parameters["Configured"][0]
+            )
 
     # set individual parameters
-    def set_params(self, iterations = DEFAULT_ITERATIONS,active1 = True, active2=False, dist=DEFAULT_DISTANCE, positions = DEFAULT_POSITION, pre_amp_g = DEFAULT_PRE_AMP_GAIN, out_g = DEFAULT_OUT_GAIN, normalisedAmp = NORMALISED_AMP):
+    def set_params(self, iterations = DEFAULT_ITERATIONS,active1 = True, active2=False, dist=DEFAULT_DISTANCE, positions = DEFAULT_POSITION, pre_amp_g = DEFAULT_PRE_AMP_GAIN, out_g = DEFAULT_OUT_GAIN, normalisedAmp = NORMALISED_AMP, conf = True):
 
         '''
         Enables the setting of individual parameters pertaining to the measurement set. Use the embedded red_object to configure the other parameters.
@@ -172,7 +204,7 @@ class data_set:
         self.channel_2_active = active2
 
         # To be able to verify if configuration was done or were default parameters relied upon
-        self.configured = True  
+        self.configured = conf
 
     def get_params(self):
 
@@ -193,12 +225,13 @@ class data_set:
             "NormalisedAmpFactor": [self.red_object.normalised_amp_factor],
             "PreAmpGain": [self.pre_amp_gain],
             "NormalisedAmp": [self.normalisedAmp],
-            "Iterations": [self.iterations]
+            "Iterations": [self.iterations],
+            "Oscillations": [self.red_object.oscillations]
         }
         df = pd.DataFrame().from_dict(d)
         return df
     
-    def write_to_disk(self, df_x: pd.DataFrame, fileName: str, fileLocation: str= DATA_OUT,param: bool = False):
+    def write_to_disk(self, fileName: str, fileLocation: str= DATA_OUT):
       
         # Creating the directory if it does not exist
         if not os.path.exists(fileLocation):
@@ -207,14 +240,15 @@ class data_set:
         now = datetime.datetime.now()
         print("Writing to disk: " + fileName)
 
-        # Prefixes parameter files 
-        prefix = "Parameters__" if param else ""
-        df_x.to_csv(fileLocation + "/" + prefix + fileName + "_" + str(now.hour) + "-" + str(now.minute) + "-" + str(now.second) + ".csv", index=False, header=True)
-        
+        if self.channel_1_active:
+            self.df_1.to_csv(fileLocation + "/" + fileName + "_channel_1_" + "_" + str(now.hour) + "-" + str(now.minute) + "-" + str(now.second) + ".csv", index=False, header=True)
+        if self.channel_2_active:
+            self.df_2.to_csv(fileLocation + "/" + fileName + "_channel_1_" + "_" + str(now.hour) + "-" + str(now.minute) + "-" + str(now.second) + ".csv", index=False, header=True)
 
+        self.get_params().to_csv(fileLocation + "/" + "Parameters__" + fileName + "_" + str(now.hour) + "-" + str(now.minute) + "-" + str(now.second) + ".csv", index=False, header=True)
 
     
-    def Measure(self, freq: list[int], amp: list[float], label: str):
+    def Measure(self, freq: list[int], amp: list[float], label: str, writeToDisk: bool = True):
         '''
         Principle function that carries out the measurement using the pulse and receive function.
         Functions almost identically to the previous iteration and accomodates both channels.
@@ -248,14 +282,12 @@ class data_set:
         self.df_1 = pd.DataFrame(chan1_data, columns=["Excitation Freq", "Iteration", "Driven Amp", "Time", "Signal"])
         self.df_2 = pd.DataFrame(chan2_data, columns=["Excitation Freq", "Iteration", "Driven Amp", "Time", "Signal"])
 
-        if self.channel_1_active:
-            self.write_to_disk(self.df_1, label + "_channel_1_")
-        if self.channel_2_active:
-            self.write_to_disk(self.df_2, label + "_channel_2_")
+        self.write_to_disk(fileName=label)
 
-        self.write_to_disk(self.get_params(), label, param=True)
-    
-        return self.df_1, self.df_2
+        if self.channel_1_active and self.channel_2_active == False:
+            return self.df_1
+        else:
+            return self.df_1, self.df_2
     
     
     def ProcessDFForPlotting(self, df: pd.DataFrame):
@@ -291,95 +323,23 @@ class data_set:
             }
 
             returnFrame.loc[len(returnFrame)] = newRow
-        print(returnFrame)
+
         return returnFrame, uniqueCombinations
     
-    # Will be deprecated soon. 
-    # Does not work comprehensively 
-    def Quick_Plot(self, dataframe: pd.DataFrame = pd.DataFrame(), samePlot: bool = True, timeDomain: bool = False):
-        
-        '''
-            Accepts a dataframe formatting identically to the Measure() output and a boolean that dictates whether there are one or multiple plots.\n
-            Averages over the iterations and plots the frequency domain against amplitude for each frequency-amplitude pair. 
-            Intended to quickly visualise to check for any obvious errors.
-        '''
+ 
 
-        # Needs to accomodate both channels and retrieval from class member properties
-        
-        # Grabbing the unique number of frequency-amplitude combinations
-
-        filteredDataframe = dataframe[dataframe["Iteration"] == 0]
-        uniqueCombinations = [filteredDataframe['Excitation Freq'].tolist(), filteredDataframe['Driven Amp'].tolist()]
-        numCombinations = len(uniqueCombinations[0]) 
-
-        fig, ax = plt.subplots(1,figsize=(14, 10))  if samePlot else plt.subplots(numCombinations, figsize=(14, 10)) 
-
-        
-        for i in range(numCombinations):
-            # Filtering for the frequency
-            temp_df = dataframe[dataframe["Excitation Freq"] == uniqueCombinations[0][i]]
-            # Filtering for the amplitude
-            temp_df = temp_df[temp_df["Driven Amp"] == uniqueCombinations[1][i]]
-            # Grabbing the signals
-            signals = temp_df["Signal"].tolist()
-            # Averaging the signalsds
-            avSignal = np.average(signals, axis=0)
-            # Removing DC offset 
-            avSignal = avSignal - np.mean(avSignal)
-
-            
-            
-            if not timeDomain:
-                # Grabbing the FFT and freq (excluding the negatives)
-                N = len(avSignal)
-                FFT = np.fft.rfft(avSignal)
-                FFT = FFT[:N // 2]
-                freq = np.fft.rfftfreq(N, DT)
-                freq = freq[:N // 2]
-
-                # Converting to dB (dBV)
-                y = 20*np.log10(FFT/REFERENCE_VOLTAGE) - DEFAULT_PRE_AMP_GAIN
-        
-                # Plotting
-                if not samePlot:
-                    ax[i].set_title("Excitation Freq: " + str(uniqueCombinations[0][i]) + "Hz, Driven Amp: " + str(uniqueCombinations[1][i]))
-                    ax[i].grid()
-                    ax[i].set(xlabel="", ylabel="")
-                    ax[i].semilogx(freq, y)
-                    #plt.title(" |Amplitude| (dBuV) vs Frequency (Hz) ")
-                else:
-                    ax.grid()
-                    ax.set(xlabel="Frequency", ylabel="|Amplitude| (dBuV)")
-                    ax.semilogx(freq, y, label=str(uniqueCombinations[0][i]) + "Hz" + ", " + str(uniqueCombinations[1][i]) +"V")
-                    # plt.ylim(2*np.nanmax(y), 2*np.nanmax(y))
-                    ax.legend()
-            else:
-                N = len(avSignal)
-                t = [SAMPLING_PERIOD*x for x in range(N)]
-                if samePlot:
-                    ax.plot(t, avSignal, label=str(uniqueCombinations[0][i]) + "Hz" + ", " + str(uniqueCombinations[1][i]) +"V")
-                    ax.set(xlabel="Time (s)", ylabel="Amplitude (V)")
-                    ax.legend()
-                else:
-                    ax[i].plot(t, avSignal, label=str(uniqueCombinations[0][i]) + "Hz" + ", " + str(uniqueCombinations[1][i]) +"V" )
-                    ax[i].set(xlabel="", ylabel="")
-                    ax[i].legend()
-                    ax[i].grid()
-
-        plt.show()
-    
-        return fig, ax
-    
-   
-        
-
-    def Time_Domain(self, df: pd.DataFrame, plot:bool=True, averageOrNot:bool = False):
+    def Time_Domain(self, df: pd.DataFrame = pd.DataFrame(), plot:bool=True, averageOrNot:bool = False):
 
         '''
         Plots a time-domain representation of the data. \n
-        averageOrNot applied the ProcessDFForPlotting function.
         '''
 
+        if len(self.df_1) == 0 and len(df) == 0:
+            print("No data to plot")
+            return
+        elif len(df) == 0:
+            df = self.df_1
+           
         # Checking whether the dataframe is averaged (or a single iteration has been taken)
         averaged = False if len(list(set(df["Iteration"].to_list()))) > 1 else True
 
@@ -387,8 +347,14 @@ class data_set:
         if averageOrNot and averaged == False:
             df,p = self.ProcessDFForPlotting(df)
         
+        # Flawed caclulation -> relies on the 0 index always being present. Need to fix this.
         numCombinations = len([df[df["Iteration"] == 0]['Excitation Freq'].tolist(), df[df["Iteration"] == 0]['Driven Amp'].tolist()][0])
-        numIterations = int(len(df)/numCombinations)
+
+        numIterations = 0
+        if numCombinations != 0:
+            numIterations = int(len(df)/numCombinations) 
+        else:
+            numIterations = 1
 
         # Not actually averaging but getting the unique combinations
         a,uniC = self.ProcessDFForPlotting(df)
@@ -400,80 +366,176 @@ class data_set:
 
 
         rows = int(math.ceil(numCombinations/2))
+        cols = 2 if numCombinations > 1 else 1
         fig = plt.figure()
 
         # For each unique combination
         for i in range(numCombinations):
 
-            currentAx = fig.add_subplot(rows, 2, i+1)
+            currentAx = fig.add_subplot(rows, cols, i+1)
 
             if averaged == False:
                 offset = i*numIterations - 1
                 for iter in range(numIterations):
                     currentAx.plot(t, signals[offset+ iter], label=str(uniC[0][i]) + "Hz" + ", " + str(uniC[1][i]) +"V, " + str(iter))
                     #currentAx.set(xlabel="Time (s)", ylabel="Amplitude (V)")
-                    currentAx.legend()
+                    currentAx.legend(fontsize=5)
+                    currentAx.grid()
                 fig.suptitle('Time Domain', fontsize=16)
             else:
                 currentAx.plot(t, signals[i], label=str(uniC[0][i]) + "Hz" + ", " + str(uniC[1][i]) +"V")
                 #currentAx.set(xlabel="Time (s)", ylabel="Amplitude (V)")
-                currentAx.legend()
-                fig.suptitle('Time Domain - Averaged', fontsize=16)
+                currentAx.legend(fontsize = 5)
+                currentAx.grid()
+                fig.suptitle('Time Domain - Averaged/Single', fontsize=16)
 
         
         
         if plot:
             plt.show()
-
-        return fig
-        
-
-    def Frequency_Domain(self, df: pd.DataFrame, plot:bool=True):
-
-        '''
-        Plots a time-domain representation of the data. \n
-        averageOrNot applied the ProcessDFForPlotting function.
-        '''
-
-        averaged = False if len(list(set(df["Iteration"].to_list()))) > 1 else True
-
-        # You wouldn't want a non-averaged frequency spectrum plot, right?
-        if averaged == False:
-            df, uniC = self.ProcessDFForPlotting(df)
         else:
-            a, uniC = self.ProcessDFForPlotting(df)
+            plt.ioff() 
+       
+        return fig
+    
 
+    def Frequency_Domain(self, df: pd.DataFrame = pd.DataFrame(), plot:bool=True):
+
+        '''
+        Plots frequency-domain representation of the data. \n
+        '''
+
+        if len(self.df_1) == 0 and len(df) == 0:
+            print("No data to plot")
+            return
+        elif len(df) == 0:
+            df = self.df_1
+ 
         fig, ax = plt.subplots()
         signals = df["Signal"].to_list()
+        freqList = df["Excitation Freq"].to_list()
+        ampList = df["Driven Amp"].to_list()
+        iterList = df["Iteration"].to_list()
 
         for i in range(len(signals)):
             
-            avSignal = signals[i]
+            avSignal = signals[i] - np.mean(signals[i])
             N = len(avSignal)
-            FFT = np.fft.rfft(avSignal)
-            FFT = FFT[:N // 2]
-            freq = np.fft.rfftfreq(N, DT)
-            freq = freq[:N // 2]
+            FFT = abs(np.fft.rfft(avSignal))
+            freq = np.fft.rfftfreq(N, 1/(125E6/self.red_object.decimation))/1E3
+        
 
             # Converting to dB (dBV)
-            y = 20*np.log10(FFT/REFERENCE_VOLTAGE) - DEFAULT_PRE_AMP_GAIN
+            y = 20*np.log10(FFT/REFERENCE_VOLTAGE) #- self.pre_amp_gain
     
             ax.grid()
-            ax.set(xlabel="Frequency", ylabel="|Amplitude| (dBuV)")
-            ax.semilogx(freq, y, label=str(uniC[0][i]) + "Hz" + ", " + str(uniC[1][i]) +"V")
-            # plt.ylim(2*np.nanmax(y), 2*np.nanmax(y))
-            ax.legend()
+            ax.set(xlabel="Frequency (kHz)", ylabel="|Amplitude| (V)") #ylabel="|Amplitude| (dBuV)
+            ax.plot(freq, FFT, label=str(freqList[i]/1E3) + " kHz" + ", " + str(ampList[i]) +"V" + ", " + str(iterList[i]))
+            #plt.ylim(0,)
+            ax.legend(fontsize=5)
 
         fig.suptitle('Frequency Domain', fontsize=16)
 
         if plot:
             plt.show()
-
+        else:
+            plt.ioff() 
+       
 
         return fig
+    
 
+    def SNR(self, df:pd.DataFrame = pd.DataFrame(), plot:bool=True):
+        '''
+        Calculates the Signal to Noise Ratio for the dataset by comparing the average power of the pre-trigger \n
+        samples to the post-trigger samples. 
+        '''
+
+        if len(self.df_1) == 0 and len(df) == 0:
+            print("No data to plot")
+            return
+        elif len(df) == 0:
+            df = self.df_1
+           
+
+        signals = df["Signal"].tolist()
+        SNR_array = []
+
+        
+
+        for i in range (len(signals)):
+            sig = signals[i]
+
+            # Be careful here as passing in a dataframe might actually result in the wrong pre-trigger samples being used
+            pre_trigger_signal = sig[:self.red_object.preTrigSamples]
+            post_trigger_signal = sig[self.red_object.preTrigSamples:] 
+           
+            # Calculating the power
+            pre_trigger_power = np.sum(np.square(pre_trigger_signal))/len(pre_trigger_signal)
+            post_trigger_power = np.sum(np.square(post_trigger_signal))/len(post_trigger_signal)
+
+            # Calculating the SNR in dB
+            SNR = 10*np.log10(post_trigger_power/pre_trigger_power)
+            SNR_array.append(SNR)
+        
+        fig, ax = plt.subplots()
+        outArr = np.transpose([df["Excitation Freq"].tolist(), df["Driven Amp"].tolist(),df["Iteration"].tolist(),[snr for snr in SNR_array]]).tolist()
+        ax.table(cellText=outArr, loc='center', colLabels=["Frequency (Hz)", "Amplitude (V)", "Iteration","SNR (dB)"])
+            
+        if plot:
+            plt.show()
+        else:
+            plt.ioff()
+
+        return fig
 
     def Quick_Plot_New():
         # Will add a comprehensive quick plot function that uses a tabbed window to essentially plot everything
         # Will leverage the stored dataframes from previous measurements to make the function calls as easy as possible
         pass
+
+
+    def features(self, df = pd.DataFrame(),lowF = DEFAULT_LOWER_FREQUENCY, highF = DEFAULT_HIGHER_FREQUENCY, thresh = DEFAULT_THRESHOLD, rollOff = DEFAULT_ROLL_OFF):
+        def computeFeatures(row):
+                sig = np.array(row["Signal"]) 
+                feat = aepe.compute_all_ae_processing_algos(sig, 125E6/self.red_object.decimation, lowF, highF, thresh, rollOff)
+                return pd.Series(feat)
+        
+        if len(df) == 0:    
+            if self.df_1.empty:
+                print("DataFrame is empty.")
+                return
+    
+            features_df = self.df_1.apply(computeFeatures, axis=1)
+            self.df_1 = pd.concat([self.df_1, features_df], axis=1)
+        
+            return features_df
+        else:
+            features_df = df.apply(computeFeatures, axis=1)
+            df = pd.concat([df, features_df], axis=1)
+            return features_df
+        
+
+    def average_features_over_iterations(self, df = pd.DataFrame()):
+
+        if len(df) == 0:
+            df = self.df_1
+
+        featuresDF = self.features()
+        a, uniC = self.ProcessDFForPlotting(df)
+
+        exportFrame = pd.DataFrame()
+
+        for x in range(len(uniC[0])):
+            filtered = df[(df["Excitation Freq"] == uniC[0][x]) & (df["Driven Amp"] == uniC[1][x])]
+            av_feat_df = pd.DataFrame()
+
+            av_feat_df["Excitation Freq"] = [uniC[0][x]]
+            av_feat_df["Driven Amp"] =[ uniC[1][x]]
+
+            for feat in PROPERTIES_TO_CALCULATE:
+                av_feat_df[feat] = [np.mean(filtered[feat])]
+            
+            exportFrame = pd.concat([exportFrame, av_feat_df], ignore_index=True)
+            
+        return exportFrame
