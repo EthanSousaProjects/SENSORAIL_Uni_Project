@@ -1,10 +1,8 @@
 """
 
-Baseline script to get the gps to output its values. Taken from the adafruit webpage:
+Funcion to get the gps to output its values. Based on the adafruit webpage:
 https://learn.adafruit.com/adafruit-ultimate-gps/circuitpython-python-uart-usage
 on 14th Feb 2025
-
-
 
 GPS function that when called sets up the gps module, reads data off it and then returns the longitude and latitude.
 If no fix returns 0 for longitude and latitude.
