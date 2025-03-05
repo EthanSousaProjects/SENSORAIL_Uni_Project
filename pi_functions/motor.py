@@ -6,6 +6,8 @@ Defines distance traveled and and on and off function for manual movements.
 """
 
 from sys import exit
+from math import pi
+import asyncio
 
 try:
     import RPi.GPIO as gpio
@@ -72,7 +74,6 @@ class pololu_motor:
         self.forwards_dir = None
 
         gpio.setmode(gpio.BOARD) # Setting up gpio pins to be numbered based on the board number and not the BCM number
-        #TODO: Finish GPIO setup
         # pwm setup
         self.power = gpio.PWM(power_pin,pwm_freq)
         # Direction setup
@@ -164,7 +165,6 @@ class pololu_motor:
         Args:
             encode_a: Required pin definition for an Encoder output.
             encode_b: Optional pin definintion for extra encoder output.
-
         """
         if self.encode_num == 2 and encode_b is None:
             # Error case where the encoder pins have not been set correctly.
@@ -177,23 +177,78 @@ class pololu_motor:
             exit
 
         self.encode_a = encode_a
+        gpio.setup(encode_a, gpio.IN, pull_up_down=gpio.PUD_UP)
         
         if self.encode_num == 2:
             self.encode_b = encode_b
+            gpio.setup(encode_b, gpio.IN, pull_up_down=gpio.PUD_UP)
 
-    def dis_setup(gear_ratio,wheel_diam,counts_per_rev): #TODO: Finish function
+    def dis_setup(gear_ratio,wheel_diam,counts_per_rev):
         """
         Function to setup the distance calculation feature of this class for advanced usage.
 
         Args:
-            gear_ratio: This is the gear ratio between the shaft with the encoders (typically the motor shaft) and the final output shaft(one with drive wheels).
+            gear_ratio: This is the gear ratio between the shaft with the encoders (typically the motor shaft) and the final output shaft(one with drive wheels). Code takes this gear ratio as 1 rotation of encoder shaft to ammount of rotation of final output shaft. Reduction ratio < 1 increaser ratio > 1.
             wheel_diam: In meters, this is the diameter of the drive wheels.
             counts_per_rev: The ammount of rises and falls the encoder pulses (both if defined) will have over a singular rotation of the encoder shaft (typically motor shaft).
-
         """
+        if gear_ratio <= 0.0 or wheel_diam <= 0.0 or counts_per_rev <= 0.0:
+            print("Incorrect definition or gear ratio, wheel diameter or counts per revolution. Please define correctly.")
+            print("Program will not exit")
+            exit
+        
+        self.gear_ratio = gear_ratio
+        self.wheel_circum = wheel_diam * pi
+        self.counts_per_rev = counts_per_rev
 
-    def move_dis(direction): #TODO: Finish function
-        direction = a or b
+    def encode_pulse_count():
+        self.counted_pulses += 1
+
+    
+    async def move_dis(direction, duty, distance): #TODO: Finish function
+        """
+        Turn the motor on until you have gone past a certain distance.
+
+        Args:
+            direction(string): Can be either 'a' or 'b' be default. If the forwards setup method has been used then 'forward' and 'backward' are valid parameters.
+            duty(float): The Duty cycle of the pwm signal. 0.0 is no power 100.0 is full power. In a percent. Is max power the motor will have.
+            distance: The target distance to travel of the bot given in meters
+        """
+        # Error check
+        if distance <= 0.0:
+            print("Distance to travel ammount is less than or equal to zero. Set direction in the method call and use a positive value in distance parameter")
+
+        # Calculating how many pulses we need to move the required distance.
+        needed_Pulses = (distance * self.counts_per_rev)/(self.wheel_circum * self.gear_ratio)
+
+        # gpio and counting setup
+        self.counted_pulses = 0
+        gpio.add_event_detect(self.encode_a, gpio.BOTH, callback=self.encode_pulse_count)
+        if self.encode_num == 2:
+            gpio.add_event_detect(self.encode_b, gpio.BOTH, callback=self.encode_pulse_count)
+
+        # Turning motor on
+        self.move_cont(direction,duty)
+
+        # Waiting to reach ammount of pulses
+        while self.counted_pulses < needed_Pulses:
+            await asyncio.sleep(0.0001)
+            #TODO: Adjust duty cycle based on how close we are to making distance so that when motor is turned off we are not over shooting due to too much power.
+
+        #Turning motor off
+        self.stop()
+
+        #TODO: add in this check of distance moved
+        # Checking distance moved prediction is right.
+
+        # Looping untill in 10% error distance?
+
+        # Disabiling gpio encoder counting
+        gpio.remove_event_detect(self.encode_a)
+        if self.encode_num == 2:
+            gpio.remove_event_detect(self.encode_b)
+        
+
 
 gpio.setmode(gpio.BOARD) # use this one as i
 gpio.setmode(gpio.BCM)
