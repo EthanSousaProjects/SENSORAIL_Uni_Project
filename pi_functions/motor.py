@@ -3,6 +3,7 @@
 Class to manage things with a motor and the encoder outputs.
 
 Defines distance traveled and and on and off function for manual movements.
+
 """
 
 from sys import exit
@@ -13,7 +14,7 @@ try:
     import RPi.GPIO as gpio
 except RuntimeError:
     print("Error importing RPi.GPIO!  This is probably because you need superuser privileges.  You can achieve this by using 'sudo' to run your script")
-    print("Program will not exit")
+    print("Program will now exit")
     exit
 
 #TODO: Finish making this motor class See description on what has to be made.
@@ -143,11 +144,34 @@ class pololu_motor:
 
         # PWM/ power enable
         if duty < 0.0 or duty > 100.0:
-            print("Motor power pwm duty cycle is set to high. Value must be between 0 and 100")
+            print("Motor power pwm duty cycle is set to high or too low. Value must be between 0 and 100")
             print("Program will not exit")
             exit
         
         self.power.start(duty)
+
+    def duty_cycle_change(duty):
+        """
+        Change the pwm duty cycle of the motor
+
+        Args:
+            duty(float): The Duty cycle of the pwm signal. 0.0 is no power 100.0 is full power. In a percent.
+        """
+        if duty < 0.0 or duty > 100.0:
+            print("Motor power pwm duty cycle is set to high or too low. Value must be between 0 and 100")
+            print("Program will not exit")
+            exit
+
+        self.power.ChangeDutyCycle(duty)
+
+    def freq_change(pwm_freq):
+        """
+        Change the pwm frequency of the motor.
+
+        Args:
+            pwm_freq: The frequency of which the pwm signal will run at Default is 1000.
+        """
+        self.power.ChangeFrequency(pwm_freq)
 
     def stop():
         """

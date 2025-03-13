@@ -12,7 +12,6 @@ dependencies:
  - ipykernel=6.29.5
  - pip3=24.2
  - pip3:
-   - gpiozero=2.0.1
    - RPi.GPIO=0.7.1
    - Adafruit-Blinka=8.53.0
    - adafruit-circuitpython-gps=3.11.1
