@@ -95,17 +95,17 @@ class pololu_motor:
             print("Program will not exit")
             exit
 
-    def move_cont(direction, duty):
+    def move_cont(dir, duty):
         """
         Turn the motor on until program stops or the motor is told to stop.
 
         Args:
-            direction(string): Can be either 'a' or 'b' be default. If the forwards setup method has been used then 'forward' and 'backward' are valid parameters.
+            dir(string): Can be either 'a' or 'b' be default. If the forwards setup method has been used then 'forward' and 'backward' are valid parameters.
             duty(float): The Duty cycle of the pwm signal. 0.0 is no power 100.0 is full power. In a percent.
         """
         
         # Direction enable + error check
-        if direction != "a" and direction != "b" and direction != "forward" and direction != "backward":
+        if dir != "a" and dir != "b" and dir != "forward" and dir != "backward":
             print("Motor moving direction has not been specified correctly. Plases specifiy a valid direction input.")
             print("Program will not exit")
             exit
@@ -115,19 +115,19 @@ class pololu_motor:
             print("Program will not exit")
             exit
           
-        elif direction == "a":
+        elif dir == "a":
             gpio.output(self.dir_a,True)
 
-        elif direction == "b":
+        elif dir == "b":
             gpio.output(self.dir_b,True)
 
-        elif direction == "foward" or direction == "backward" and self.forwards_dir is None:
+        elif dir == "foward" or dir == "backward" and self.forwards_dir is None:
             print("Motor specificed to move forwards or backwards but, forwards direction has not been set.")
             print("Please specifiy a forwards direction before using forwards or backwards.")
             print("Program will not exit")
             exit
         
-        elif direction == "forwards":
+        elif dir == "forwards":
             if self.forwards_dir == "a":
                 gpio.output(self.dir_a, True)
             
@@ -229,12 +229,15 @@ class pololu_motor:
         self.counted_pulses += 1
 
     
-    async def move_dis(direction, duty, distance): #TODO: Finish function
+    async def move_dis(dir, duty, distance): #TODO: Finish function
         """
         Turn the motor on until you have gone past a certain distance.
 
+        Must run this method using the 'asyncio.run()' command. Instead of a normall class method call due to the use of async to avoid program from haulting.
+        Example is async.run(<classname>.move_dis(a,b,c))
+
         Args:
-            direction(string): Can be either 'a' or 'b' be default. If the forwards setup method has been used then 'forward' and 'backward' are valid parameters.
+            dir(string): Can be either 'a' or 'b' be default. If the forwards setup method has been used then 'forward' and 'backward' are valid parameters.
             duty(float): The Duty cycle of the pwm signal. 0.0 is no power 100.0 is full power. In a percent. Is max power the motor will have.
             distance: The target distance to travel of the bot given in meters
         """
@@ -252,7 +255,7 @@ class pololu_motor:
             gpio.add_event_detect(self.encode_b, gpio.BOTH, callback=self.encode_pulse_count)
 
         # Turning motor on
-        self.move_cont(direction,duty)
+        self.move_cont(dir,duty)
 
         # Waiting to reach ammount of pulses
         while self.counted_pulses < needed_Pulses:
