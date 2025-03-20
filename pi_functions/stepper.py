@@ -5,6 +5,7 @@ Class to manage things with the pololu stepper motors.
 """
 
 from sys import exit
+from math import ceil # Used to round up
 import asyncio
 from gpiozero import LED
 # led is for turning on and off gpio pins.
@@ -21,7 +22,7 @@ class pololu_stepper:
         step_pin: The pin that actives step commands.
         (optional)step_time: This is the time that will be waited after a gpio pin is turned on or off for the step commands (in secounds)
     """
-    #TODO: Make sure all comments are written well
+    #TODO:Test on Pi
     def __init__(self,dir_pin,step_pin,step_time=0.01):
         """
         Parameters needed to setup the class.
@@ -40,13 +41,12 @@ class pololu_stepper:
         self.up_dir = None
         self.step_time = step_time
 
-
     def up(self,up_dir):
         """
-        Optional parameter to determine which direction is considered up. Easier to write up or down instead True or False
+        Optional parameter to determine which direction is considered up. Easier to write up or down instead of True or False
         
         Args:
-            up_dir: Boolean TRUE or False. True is when direction GPIO pin is energised.
+            up_dir: Boolean True or False. True is when direction GPIO pin is energised.
         """
 
         if up_dir != True or up_dir != False:
@@ -113,13 +113,13 @@ class pololu_stepper:
             self.step.off()
             asyncio.wait(self.step_time)
 
-    def dis_setup(self,steps_per_rev,lead,step_size=1): # TODO: Finish function to setup parameters needed to describe how much distance is traveled per 
+    def dis_setup(self,steps_per_rev,lead,step_size=1):
         """
         Area to setup the parameters for the move distance feature of the class.
 
         Args:
-            steps_per_rev: The ammount of full steps that 
-            lead: The linear travel the nut makes per one screw revolution
+            steps_per_rev: The ammount of full steps that are taken for 1 revolution of the lead screw nut.
+            lead: The linear travel the nut makes per one screw revolution (given in meters)
             step_size(optional): Step size being used with the stepper motor (normally full step).
         """
 
@@ -130,13 +130,27 @@ class pololu_stepper:
         elif lead <= 0.0:
             print("Lead number is less than or equal to zero")
 
+        self.dis_per_step = lead / (steps_per_rev * step_size)
 
-
-        self.steps_per_rev = steps_per_rev
-        self.lead = lead
-        self.step_size = step_size
-
-    def move_dis(self,dir, distance): #TODO: Finish function
+    def move_dis(self,dir, dis):
         """
+        Method to move a lead screw directly attached to the stepper motor a specifed distance. Not it will round up to nearest step size (normally nearest full step).
 
+        Must have run the method dis_setup to make this work.
+
+        Args:
+            dir: Direction definition can be `True` or `False` by default. If up method has been used then `up` and `down` are valid parameters.
+            dis: The target distance to get the nut on the lead screw to move (given in meters).
         """
+        # Error check
+        if dis <= 0:
+            print("Distance is less than or equal to zero. Distance must be a positive float")
+            print("Program will now exit")
+            exit
+        # dir error check is done in move steps method so not included here.
+
+        # Calculate how many steps to move
+        cal_steps = ceil(dis/self.dis_per_step)
+
+        # Running steps
+        asyncio.run(self.move_steps(dir, cal_steps))
