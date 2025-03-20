@@ -1,33 +1,32 @@
 """
 
-class to manage things with the stepper motors.
+Class to manage things with the pololu stepper motors.
 
 """
 
 from sys import exit
 import asyncio
-
-try:
-    import RPi.GPIO as gpio
-except RuntimeError:
-    print("Error importing RPi.GPIO!  This is probably because you need superuser privileges.  You can achieve this by using 'sudo' to run your script")
-    print("Program will now exit")
-    exit
+from gpiozero import LED
+# led is for turning on and off gpio pins.
 
 class pololu_stepper:
     """
     A class to manage the plolu stepper motors
 
-    The class with give the user the ability to move a certain number of steps in a specified direction or a specfic distance discrined
+    The class will give the user the ability to move a certain number of steps in a specified direction or a specfic distance discrined
+
+    Pin numbers must be BCM numbers.
+    Args:
+        dir_pin: Pin to set rotation of stepper motor on controller
+        step_pin: The pin that actives step commands.
+        (optional)step_time: This is the time that will be waited after a gpio pin is turned on or off for the step commands (in secounds)
     """
-    #TODO: write out what the function does and how to use it.
-    #TODO: Write out the method to step the stepper motor by one step or multiple based on input
     #TODO: Make sure all comments are written well
-    def _init_(dir_pin,step_pin,step_time=0.01):
+    def __init__(self,dir_pin,step_pin,step_time=0.01):
         """
         Parameters needed to setup the class.
 
-        Pin numbers must be the board numbers not the BCM numbers.
+        Pin numbers must be the BCM numbers.
 
         Args:
             dir_pin: Pin to set rotation of stepper motor on controller
@@ -35,18 +34,14 @@ class pololu_stepper:
             (optional)step_time: This is the time that will be waited after a gpio pin is turned on or off for the step commands (in secounds)
         """
 
-        self.dir_pin = dir_pin
-        self.step_pin = step_pin
+        # Setup
+        self.dir = LED(dir_pin)
+        self.step = LED(step_pin)
         self.up_dir = None
-
-        # GPIO setup
-        gpio.setmode(gpio.BOARD)
-        gpio.setup(dir_pin,gpio.OUT)
-        gpio.setup(step_pin,gpio.OUT)
+        self.step_time = step_time
 
 
-
-    def up(up_dir):
+    def up(self,up_dir):
         """
         Optional parameter to determine which direction is considered up. Easier to write up or down instead True or False
         
@@ -57,20 +52,18 @@ class pololu_stepper:
         if up_dir != True or up_dir != False: #TODO: Finish off this error check
             print(" No boolean valjue input to method.")
             
-
         self.up_dir = up_dir
 
-    async def move_steps(dir,steps): #TODO: Make it so that the stepper rotates when this method is called
+    async def move_steps(self,dir,steps): #TODO: Make it so that the stepper rotates when this method is called
         """
-            Rotate the stepper motor a specifed number of steps in a specified direction.
+        Rotate the stepper motor a specifed number of steps in a specified direction.
 
-            Must run this method using the 'asyncio.run()' command. Instead of a normall class method call due to the use of async to avoid program from haulting.
-            Example is async.run(<classname>.move.steps(a,b,c))
+        Must run this method using the 'asyncio.run()' command. Instead of a normall class method call due to the use of async to avoid program from haulting.
+        Example is async.run(<classname>.move.steps(a,b))
 
-            Args:
-                dir: Direction definition can be `True` or `False` by default. If up method has been used then `up` and `down` are valid parameters.
-                steps: the ammount of steps that will be made by the stepper motor (must be whole number of steps If half/ quater stepping is required manually set it up on the control board)
-
+        Args:
+            dir: Direction definition can be `True` or `False` by default. If up method has been used then `up` and `down` are valid parameters.
+            steps: the ammount of steps that will be made by the stepper motor (must be whole number of steps If half/ quater stepping is required manually set it up on the control board)
         """
 
         #Error Check
@@ -78,7 +71,8 @@ class pololu_stepper:
             print("up direction has not been described. Please use True or False or define the up direction using self.up() method")
             print("Program will now exit")
             exit
-        elif dir != "up" or dir != "down" or dir != True or dir != False:
+
+        elif dir != "up" and dir != "down" and dir != True and dir != False:
             print("Invalid input for direction parameter. Use: up, down, True or False")
             print("Program will now exit")
             exit
@@ -88,27 +82,36 @@ class pololu_stepper:
             print("Program will now exit")
             exit
 
-        # Setting up direction on control board
+        # Setting up direction on stepper control board
         if dir == "up":
-            # direction must be the setting (True or Flase from self.dir_up)
-            gpio.output(self.dir_pin,self.up_dir)
+            if self.up_dir == True:
+                self.dir.on()
 
+            else:
+                self.dir.off()
+            
         elif dir == "down":
-            # Direction must be oposite to the up dir set before thus use of not to get opposite of that boolean value.
-            gpio.output(self.dir_pin, not self.up_dir)
+            if self.up_dir != True:
+                self.dir.on()
+                
+            else:
+                self.dir.off()
+
+        elif dir == True:
+            self.dir.on()
 
         else:
-            # Dir is either True or False at this point so can just directly use it.
-            gpio.output(self.dir_pin, dir)
+            # Direction must be False therefore direction pin should be set to off
+            self.dir.off()
 
+        # Stepping by creating step signals
         for i in range(steps):
-            gpio.output(self.step_pin,True)
+            self.step.on()
             asyncio.wait(self.step_time)
-            gpio.output(self.step_pin,False)
+            self.step.off()
             asyncio.wait(self.step_time)
 
-
-    def dis_setup(steps_per_rev,lead,step_size=1): # TODO: Finish function to setup parameters needed to describe how much distance is traveled per 
+    def dis_setup(self,steps_per_rev,lead,step_size=1): # TODO: Finish function to setup parameters needed to describe how much distance is traveled per 
         """
         Area to setup the parameters for the move distance feature of the class.
 
@@ -131,7 +134,7 @@ class pololu_stepper:
         self.lead = lead
         self.step_size = step_size
 
-    def move_dis(dir, distance): #TODO: Finish function
+    def move_dis(self,dir, distance): #TODO: Finish function
         """
 
         """

@@ -12,9 +12,10 @@ dependencies:
  - ipykernel=6.29.5
  - pip3=24.2
  - pip3:
-   - RPi.GPIO=0.7.1
+   - gpiozero=2.0.1
    - Adafruit-Blinka=8.53.0
    - adafruit-circuitpython-gps=3.11.1
 
 #TODO: Test on raspberry Pi.
+#TODO: rewrite all code to use gpiozero instead of RPi.GPIO as it does not work on 5.
 #Env file should work but just double check
