@@ -32,7 +32,6 @@ class pololu_motor:
         (optional)pwm_freq: The frequency of which the pwm signal will run at Default is 1000.
     """
     #TODO: Finish off writing the comments/ usage instrctions
-    #TODO: add in the self thing
     def _init_(self,power_pin,dir_a,dir_b,encode_num=None,pwm_freq=1000):
         """
         Parameters needed when setting up the class

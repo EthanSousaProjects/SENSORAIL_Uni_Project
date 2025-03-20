@@ -49,12 +49,14 @@ class pololu_stepper:
             up_dir: Boolean TRUE or False. True is when direction GPIO pin is energised.
         """
 
-        if up_dir != True or up_dir != False: #TODO: Finish off this error check
-            print(" No boolean valjue input to method.")
+        if up_dir != True or up_dir != False:
+            print("Input variable is not a boolean True or False. Please use onlu boolean True or False")
+            print("Program will now exit")
+            exit
             
         self.up_dir = up_dir
 
-    async def move_steps(self,dir,steps): #TODO: Make it so that the stepper rotates when this method is called
+    async def move_steps(self,dir,steps):
         """
         Rotate the stepper motor a specifed number of steps in a specified direction.
 
