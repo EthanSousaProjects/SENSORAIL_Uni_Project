@@ -13,9 +13,7 @@ dependencies:
  - pygame=2.6.1
  - pip3=24.2
  - pip3:
-   - gpiozero=2.0.1
-   - Adafruit-Blinka=8.53.0
-   - adafruit-circuitpython-gps=3.11.1
-
-#TODO: Test on raspberry Pi.
-#Env file should work but just double check
+   - lgpio==0.2.2.0
+   - gpiozero==2.0.1
+   - Adafruit-Blinka==8.53.0
+   - adafruit-circuitpython-gps==3.11.1
