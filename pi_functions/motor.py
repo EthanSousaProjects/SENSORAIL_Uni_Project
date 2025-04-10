@@ -12,8 +12,6 @@ import asyncio
 from gpiozero import LED, PWMLED, Button
 # led is for turning on and off gpio pins, pwmled is for pwm signals, button is for inputs to the gpio pins.
 
-#TODO: Account for the distance moving method that there are 2 motors not just 1. Separate from class i think. then pass motors into separate function using same code.
-#TODO: Test class works as i expect.
 class pololu_motor:
     """
     A class to manage the pololu motors and their encoders.
@@ -107,9 +105,11 @@ class pololu_motor:
             exit
           
         elif dir == "a":
+            self.dir_b.off()
             self.dir_a.on()
 
         elif dir == "b":
+            self.dir_a.off()
             self.dir_b.on()
 
         elif dir == "foward" or dir == "backward" and self.forwards_dir is None:
@@ -118,19 +118,24 @@ class pololu_motor:
             print("Program will now exit")
             exit
         
-        elif dir == "forwards":
+        elif dir == "forward":
             if self.forwards_dir == "a":
+                self.dir_b.off()
                 self.dir_a.on()
+                
             
             else:
+                self.dir_a.off()
                 self.dir_b.on()
 
         else:
             # Direction is known to be backwards so just oposite of forward direction
             if self.forwards_dir == "a":
+                self.dir_a.off()
                 self.dir_b.on()
             
             else:
+                self.dir_b.off()
                 self.dir_a.on()
 
         # PWM/ power enable

@@ -5,15 +5,20 @@ import pygame
 from bot_parameters import*
 import motor
 import stepper
+from time import sleep
 
 ## Bot setup
 # Drive motors
 drive_mot_a = motor.pololu_motor(drive_a_pwm_pin,drive_a_dira_pin,drive_a_dirb_pin)
 drive_mot_b = motor.pololu_motor(drive_b_pwm_pin,drive_b_dira_pin,drive_b_dirb_pin)
-drive_mot_b.forwards() #TODO: Define
-drive_mot_a.forwards() #TODO: Define
-# Steppers
+drive_mot_b.forwards(drive_b_forwards)
+drive_mot_a.forwards(drive_a_forwards)
 
+# Steppers
+clam_step_a = stepper.pololu_stepper(clam_step_a_dir_pin,clam_step_a_step_pin)
+clam_step_b = stepper.pololu_stepper(clam_step_b_dir_pin,clam_step_b_step_pin)
+clam_step_a.up(False)
+clam_step_b.up(True)
 
 ## TODO: Use this script to manually control the bot using a controller. A first party xbox one is what we have been using.
 
@@ -58,15 +63,31 @@ DEADZONE = 0.2
 # Define functions for button actions
 def action_a():
     print("A button pressed - Performing action A")
+    drive_mot_b.move_cont("forward",drive_mots_max_pow)
+    drive_mot_a.move_cont("forward",drive_mots_max_pow)
+    sleep(1)
+    drive_mot_b.stop()
+    drive_mot_a.stop()
+
 
 def action_b():
     print("B button pressed - Performing action B")
+    drive_mot_b.move_cont("backward",drive_mots_max_pow)
+    drive_mot_a.move_cont("backward",drive_mots_max_pow)
+    sleep(1)
+    drive_mot_b.stop()
+    drive_mot_a.stop()
 
 def action_x():
     print("X button pressed - Performing action X")
+    clam_step_b.move_steps("down",Clamp_max_steps)
+    clam_step_a.move_steps("down",Clamp_max_steps)
+
 
 def action_y():
     print("Y button pressed - Performing action Y")
+    clam_step_b.move_steps("up",Clamp_max_steps)
+    clam_step_a.move_steps("up",Clamp_max_steps)
 
 def action_lb():
     print("Left Bumper pressed - Performing action LB")
@@ -101,6 +122,7 @@ def handle_triggers():
     lt = joystick.get_axis(AXIS_LT)
     rt = joystick.get_axis(AXIS_RT)
     print(f"Left Trigger: {lt:.2f} | Right Trigger: {rt:.2f}")
+    #if rt > 0:
 
 # Mapping of buttons to functions
 button_actions = {
