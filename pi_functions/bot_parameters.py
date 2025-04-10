@@ -28,6 +28,7 @@ drive_b_forwards = "b"
 
 
 ## Clamping Steppers related properties
+Clamp_max_steps = 100
 
 clam_step_a_step_pin = 0
 clam_step_a_dir_pin = 1
