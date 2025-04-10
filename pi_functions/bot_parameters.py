@@ -11,8 +11,7 @@ Note that pin numbers are BCM numbers
 ## Drive motors related properties.
 
 # Properties shared between motors
-drive_mots_max_pow = 20
-drive_mots_freq = 10000
+drive_mots_max_pow = 30
 
 # Mot A
 drive_a_pwm_pin = 13

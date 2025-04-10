@@ -20,8 +20,6 @@ clam_step_b = stepper.pololu_stepper(clam_step_b_dir_pin,clam_step_b_step_pin)
 clam_step_a.up(False)
 clam_step_b.up(True)
 
-## TODO: Use this script to manually control the bot using a controller. A first party xbox one is what we have been using.
-
 # Initialize pygame and joystick module
 pygame.init()
 pygame.joystick.init()
@@ -65,7 +63,7 @@ def action_a():
     print("A button pressed - Performing action A")
     drive_mot_b.move_cont("forward",drive_mots_max_pow)
     drive_mot_a.move_cont("forward",drive_mots_max_pow)
-    sleep(1)
+    sleep(0.25)
     drive_mot_b.stop()
     drive_mot_a.stop()
 
@@ -74,7 +72,7 @@ def action_b():
     print("B button pressed - Performing action B")
     drive_mot_b.move_cont("backward",drive_mots_max_pow)
     drive_mot_a.move_cont("backward",drive_mots_max_pow)
-    sleep(1)
+    sleep(0.25)
     drive_mot_b.stop()
     drive_mot_a.stop()
 
@@ -122,7 +120,20 @@ def handle_triggers():
     lt = joystick.get_axis(AXIS_LT)
     rt = joystick.get_axis(AXIS_RT)
     print(f"Left Trigger: {lt:.2f} | Right Trigger: {rt:.2f}")
-    #if rt > 0:
+    forward_power_percent = (rt + 1)/2
+    reverse_power_percent = (lt + 1)/2
+    if forward_power_percent >= 0.2:
+        drive_mot_b.move_cont("forward",drive_mots_max_pow * forward_power_percent)
+        drive_mot_a.move_cont("forward",drive_mots_max_pow * forward_power_percent)
+
+    elif reverse_power_percent >= 0.2:
+        drive_mot_b.move_cont("backward",drive_mots_max_pow * reverse_power_percent)
+        drive_mot_a.move_cont("backward",drive_mots_max_pow * reverse_power_percent)
+
+    else:
+        drive_mot_b.stop()
+        drive_mot_a.stop()
+
 
 # Mapping of buttons to functions
 button_actions = {

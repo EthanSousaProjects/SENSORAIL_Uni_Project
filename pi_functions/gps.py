@@ -25,7 +25,6 @@ def current_location():
         longitude: longitude of current location
         latitude: latitude of the current location
     """
-    #TODO: Test on pi to be sure it works. Should do though.
     # Creating the serial connection to the GPS
     uart = serial.Serial(board.TX, board.RX, baudrate=9600, timeout=10)
 

@@ -22,7 +22,6 @@ class pololu_stepper:
         step_pin: The pin that actives step commands.
         (optional)step_time: This is the time that will be waited after a gpio pin is turned on or off for the step commands (in secounds)
     """
-    #TODO:Test on Pi
     def __init__(self,dir_pin,step_pin,step_time=0.015):
         """
         Parameters needed to setup the class.
