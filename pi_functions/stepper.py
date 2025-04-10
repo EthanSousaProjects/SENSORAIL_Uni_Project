@@ -6,7 +6,7 @@ Class to manage things with the pololu stepper motors.
 
 from sys import exit
 from math import ceil # Used to round up
-import asyncio
+import time
 from gpiozero import LED
 # led is for turning on and off gpio pins.
 
@@ -23,7 +23,7 @@ class pololu_stepper:
         (optional)step_time: This is the time that will be waited after a gpio pin is turned on or off for the step commands (in secounds)
     """
     #TODO:Test on Pi
-    def __init__(self,dir_pin,step_pin,step_time=0.01):
+    def __init__(self,dir_pin,step_pin,step_time=0.015):
         """
         Parameters needed to setup the class.
 
@@ -32,7 +32,7 @@ class pololu_stepper:
         Args:
             dir_pin: Pin to set rotation of stepper motor on controller
             step_pin: The pin that actives step commands.
-            (optional)step_time: This is the time that will be waited after a gpio pin is turned on or off for the step commands (in secounds)
+            (optional)step_time: This is the time that will be waited after a gpio pin is turned on or off for the step commands (in secounds) (fastest tested is 0.015s)
         """
 
         # Setup
@@ -49,19 +49,16 @@ class pololu_stepper:
             up_dir: Boolean True or False. True is when direction GPIO pin is energised.
         """
 
-        if up_dir != True or up_dir != False:
+        if up_dir != True and up_dir != False:
             print("Input variable is not a boolean True or False. Please use onlu boolean True or False")
             print("Program will now exit")
             exit
             
         self.up_dir = up_dir
 
-    async def move_steps(self,dir,steps):
+    def move_steps(self,dir,steps):
         """
         Rotate the stepper motor a specifed number of steps in a specified direction.
-
-        Must run this method using the 'asyncio.run()' command. Instead of a normall class method call due to the use of async to avoid program from haulting.
-        Example is async.run(<classname>.move.steps(a,b))
 
         Args:
             dir: Direction definition can be `True` or `False` by default. If up method has been used then `up` and `down` are valid parameters.
@@ -109,9 +106,9 @@ class pololu_stepper:
         # Stepping by creating step signals
         for i in range(steps):
             self.step.on()
-            asyncio.wait(self.step_time)
+            time.sleep(self.step_time)
             self.step.off()
-            asyncio.wait(self.step_time)
+            time.sleep(self.step_time)
 
     def dis_setup(self,steps_per_rev,lead,step_size=1):
         """
@@ -153,4 +150,4 @@ class pololu_stepper:
         cal_steps = ceil(dis/self.dis_per_step)
 
         # Running steps
-        asyncio.run(self.move_steps(dir, cal_steps))
+        self.move_steps(dir, cal_steps)
