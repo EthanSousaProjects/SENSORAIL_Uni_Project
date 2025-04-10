@@ -13,7 +13,6 @@ from gpiozero import LED, PWMLED, Button
 # led is for turning on and off gpio pins, pwmled is for pwm signals, button is for inputs to the gpio pins.
 
 #TODO: Account for the distance moving method that there are 2 motors not just 1. Separate from class i think. then pass motors into separate function using same code.
-#TODO: double check all comments/ doc strings are formatted + described correctly.
 #TODO: Test class works as i expect.
 class pololu_motor:
     """
@@ -31,8 +30,7 @@ class pololu_motor:
         (optional)encode_num: The number of encoders that will be used. Option of just using one of them or both (only input 1 or 2). Default is None. 
         (optional)pwm_freq: The frequency of which the pwm signal will run at Default is 1000.
     """
-    #TODO: Finish off writing the comments/ usage instrctions
-    def _init_(self,power_pin,dir_a,dir_b,encode_num=None,pwm_freq=1000):
+    def __init__(self,power_pin,dir_a,dir_b,encode_num=None,pwm_freq=1000):
         """
         Parameters needed when setting up the class
 
@@ -208,45 +206,58 @@ class pololu_motor:
         self.wheel_circum = wheel_diam * pi
         self.counts_per_rev = counts_per_rev
 
-    def encode_pulse_count():
-        self.counted_pulses += 1
 
-    
-    async def move_dis(self,dir, duty, distance):
-        """
-        Turn the motor on until you have gone past a certain distance.
 
-        Must run this method using the 'asyncio.run()' command. Instead of a normall class method call due to the use of async to avoid program from haulting.
-        Example is async.run(<classname>.move_dis(a,b,c))
+def encode_pulse_count():
+    self.counted_pulses += 1
 
-        Args:
-            dir(string): Can be either 'a' or 'b' be default. If the forwards setup method has been used then 'forward' and 'backward' are valid parameters.
-            duty(float): The Duty cycle of the pwm signal. 0.0 is no power 100.0 is full power. In a percent. Is max power the motor will have.
-            distance: The target distance to travel of the bot given in meters
-        """
-        # Error check
-        if distance <= 0.0:
-            print("Distance to travel ammount is less than or equal to zero. Set direction in the method call and use a positive value in distance parameter")
+# Non motor specific function but important to the motors.
 
-        # Calculating how many pulses we need to move the required distance.
-        needed_Pulses = (distance * self.counts_per_rev)/(self.wheel_circum * self.gear_ratio)
+async def move_dis(self,dir, duty, distance):
+    """
+    Turn the motor on until you have gone past a certain distance.
 
-        # gpio and counting setup
-        self.counted_pulses = 0
+    Must run this method using the 'asyncio.run()' command. Instead of a normall class method call due to the use of async to avoid program from haulting.
+    Example is async.run(<classname>.move_dis(a,b,c))
 
-        self.encode_a.when_pressed = encode_pulse_count
-        self.encode_a.when_pressed = encode_pulse_count
+    Args:
+        dir(string): Can be either 'a' or 'b' be default. If the forwards setup method has been used then 'forward' and 'backward' are valid parameters.
+        duty(float): The Duty cycle of the pwm signal. 0.0 is no power 100.0 is full power. In a percent. Is max power the motor will have.
+        distance: The target distance to travel of the bot given in meters
+    """
+    # Error check
+    if distance <= 0.0:
+        print("Distance to travel ammount is less than or equal to zero. Set direction in the method call and use a positive value in distance parameter")
 
-        if self.encode_num == 2:
-            self.encode_b.when_pressed = encode_pulse_count
-            self.encode_b.when_pressed = encode_pulse_count
+    # Calculating how many pulses we need to move the required distance.
+    needed_Pulses = (distance * self.counts_per_rev)/(self.wheel_circum * self.gear_ratio)
 
-        # Turning motor on
-        self.move_cont(dir,duty)
+    # gpio and counting setup
+    self.counted_pulses = 0
 
-        # Waiting to reach ammount of pulses
-        while self.counted_pulses < needed_Pulses:
-            await asyncio.sleep(0.0001)
+    self.encode_a.when_pressed = encode_pulse_count
+    self.encode_a.when_pressed = encode_pulse_count
 
-        #Turning motor off
-        self.stop()
+    if self.encode_num == 2:
+        self.encode_b.when_pressed = encode_pulse_count
+        self.encode_b.when_pressed = encode_pulse_count
+
+    # Turning motor on
+    self.move_cont(dir,duty)
+
+    # Waiting to reach ammount of pulses
+    while self.counted_pulses < needed_Pulses:
+        await asyncio.sleep(0.0001)
+
+    # Turning motor off
+    self.stop()
+
+
+
+
+
+def mov_dis_two_mot(motor_a, motor_b):
+    """
+    Turn the motor on until you have gone past a certain distance.
+
+    """

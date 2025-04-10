@@ -6,7 +6,7 @@ Class to manage things with the pololu stepper motors.
 
 from sys import exit
 from math import ceil # Used to round up
-import time
+from time import sleep
 from gpiozero import LED
 # led is for turning on and off gpio pins.
 
@@ -106,9 +106,9 @@ class pololu_stepper:
         # Stepping by creating step signals
         for i in range(steps):
             self.step.on()
-            time.sleep(self.step_time)
+            sleep(self.step_time)
             self.step.off()
-            time.sleep(self.step_time)
+            sleep(self.step_time)
 
     def dis_setup(self,steps_per_rev,lead,step_size=1):
         """

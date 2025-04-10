@@ -4,6 +4,9 @@ Simple file to test stepper class/ code works as expected.
 
 ## Inputs to testing script
 
+# Stepper controllers on our system are as follows:
+#   - Controller A: step = 0, dir = 1
+#   - Controller B: step = 6, dir 7
 stepper_test = True # Test the stepper motor
 stepper_dir_pin = 7 # BCM number
 stepper_step_pin = 6 # BCM number
@@ -61,6 +64,20 @@ if stepper_test == True:
 if motor_test==True:
     import motor # Import feature package
 
+    # General Setup
+    drive_motor = motor.pololu_motor(motor_pwm_pin,motor_dir_pin_a,motor_dir_pin_b)
+
+
+if gps_test==True:
+    import gps # Import feature package
+
+    longitude, latitude = gps.current_location()
+
+    print("Longitude =",longitude)
+    print("latitude =", latitude)
+
+
+
 
 """
 # Bellow is backup code i know works on pi just kept here just incase.
@@ -84,32 +101,4 @@ while (True):
     time.sleep(2)
     dtwo.off()
     d.on()
-
-
-
-
-
-## got steppers to work with the bellow code. adjust this features test script to test these things
-from gpiozero import LED
-from time import sleep
-
-red = LED(6)
-green = LED(7)
-
-green.on()
-
-
-for i in range(400):
-    red.on()
-    sleep(0.0015)
-    red.off()
-    sleep(0.0015)
-
-green.off()
-
-for b in range(400):
-    red.on()
-    sleep(0.0015)
-    red.off()
-    sleep(0.0015)
 """

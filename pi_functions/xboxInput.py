@@ -1,4 +1,21 @@
+# Imports for controller support
 import pygame
+
+# Imoports for bot properties/ features
+from bot_parameters import*
+import motor
+import stepper
+
+## Bot setup
+# Drive motors
+drive_mot_a = motor.pololu_motor(drive_a_pwm_pin,drive_a_dira_pin,drive_a_dirb_pin)
+drive_mot_b = motor.pololu_motor(drive_b_pwm_pin,drive_b_dira_pin,drive_b_dirb_pin)
+drive_mot_b.forwards() #TODO: Define
+drive_mot_a.forwards() #TODO: Define
+# Steppers
+
+
+## TODO: Use this script to manually control the bot using a controller. A first party xbox one is what we have been using.
 
 # Initialize pygame and joystick module
 pygame.init()
@@ -24,15 +41,15 @@ BUTTON_LB = 4
 BUTTON_RB = 5
 BUTTON_BACK = 6
 BUTTON_START = 7
-BUTTON_LS = 8  # Left stick press
-BUTTON_RS = 9  # Right stick press
+BUTTON_LS = 9  # Left stick press
+BUTTON_RS = 8  # Right stick press
 
 # Define stick axes
 AXIS_LS_X = 0
 AXIS_LS_Y = 1
-AXIS_RS_X = 2
-AXIS_RS_Y = 3
-AXIS_LT = 4  # Left trigger
+AXIS_RS_X = 3
+AXIS_RS_Y = 4
+AXIS_LT = 2  # Left trigger
 AXIS_RT = 5  # Right trigger
 
 # Define deadzone threshold
